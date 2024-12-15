@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Logo](assets/ix10tn-logo.png)
+![Logo](assets/ix10tn-logo.svg)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -149,6 +149,7 @@ As an interest-driven open source project, we aim to explore the following possi
 
 - Optimize parsing of nested thinking blocks and snippet blocks
 - Improve internationalization support (CN/EN) for better multilingual experience
+- Add support for parsing referenced file information in conversations
 
 ### 🔬 Technical Exploration
 

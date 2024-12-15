@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Logo](assets/ix10tn-logo.png)
+![Logo](assets/ix10tn-logo.svg)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -149,6 +149,7 @@ npm run install-extension
 
 - 优化多层嵌套的 thinking block 和 snippet block 的解析逻辑
 - 完善插件的国际化支持（中文/英文），提升多语言用户体验
+- 增加解析对话中所引用的文件信息功能
 
 ### 🔬 技术探索
 
