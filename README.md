@@ -36,11 +36,16 @@
    ```bash
    npm install
    ```
+
+![环境配置](assets/env-demo.png)
+
 3. 安装扩展：
    ```bash
    npm run install-extension
    ```
 4. 重启 Cursor IDE
+
+![安装过程](assets/install-demo.png)
 
 ### 安装路径
 
@@ -70,6 +75,12 @@
 2. 点击状态栏（右下角）的"导出所有对话"按钮
 3. 选择保存位置
 4. 点击导出
+
+![导出界面](assets/export-ui-demo.png)
+
+导出过程中可以在控制台查看详细日志：
+
+![导出日志](assets/export-log-demo.png)
 
 ## 🛠️ 开发调试
 
@@ -129,6 +140,48 @@ npm run install-extension
    - 确保保存位置有写入权限
    - 尝试不同的保存路径
    - 查看调试控制台错误信息
+
+## 📄 未来规划
+
+作为一个兴趣驱动的开源项目，我们希望在未来探索以下可能性：
+
+### 🐛 即将修复
+
+- 优化多层嵌套的 thinking block 和 snippet block 的解析逻辑
+- 完善插件的国际化支持（中文/英文），提升多语言用户体验
+
+### 🔬 技术探索
+
+- 深入研究 Cursor 运行机制，尝试实现以下功能：
+  - 解析 Cursor Tools 调用操作与参数提取
+  - 支持的工具类型：
+    - `read_file`: 读取文件
+    - `edit_file`: 编辑文件
+    - `list_dir`: 列出目录
+    - `codebase_search`: 搜索代码
+    - `grep_search`: 文本搜索
+    - `file_search`: 查找文件
+    - `run_terminal_command`: 执行命令
+    - `delete_file`: 删除文件
+  - 标注当前使用的 AI 模型信息
+  - 优化工作区和对话的导出定位
+  - 改进关键词语义提取与分析
+
+### 🚀 愿景展望
+
+我们希望探索将插件构建为智能辅助工具：
+
+1. **上下文延续增强**
+   - 缓解长文本限制带来的上下文断裂
+   - 为新对话环境提供知识蒸馏
+   - 保持工作连贯性
+
+2. **Meta-Prompt 优化服务**
+   - 基于工作区内容总结用户输入模式
+   - 提炼并保存高质量历史 Meta-Prompt
+   - 协助构建个性化 Cursorrules 文档
+
+> 注：由于学业任务繁重，本项目将作为兴趣工程持续维护。我们期待 Cursor 团队以及全球 AI 编程开发社区能以更专业的方式，满足用户日益增长的个性化 AI 编程需求。
 
 ## 📄 许可证
 

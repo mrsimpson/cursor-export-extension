@@ -36,11 +36,16 @@ Export your Cursor Composer conversations to Markdown documents, preserving thin
    ```bash
    npm install
    ```
+
+![Environment Setup](assets/env-demo.png)
+
 3. Install extension:
    ```bash
    npm run install-extension
    ```
 4. Restart Cursor IDE
+
+![Installation Process](assets/install-demo.png)
 
 ### Installation Path
 
@@ -70,6 +75,12 @@ The extension will be installed to:
 2. Click "Export All Conversations" in the status bar (bottom right)
 3. Select save location
 4. Click Export
+
+![Export Interface](assets/export-ui-demo.png)
+
+You can view detailed logs in the console during export:
+
+![Export Logs](assets/export-log-demo.png)
 
 ## 🛠️ Development
 
@@ -129,6 +140,48 @@ npm run install-extension
    - Ensure write permissions for save location
    - Try different save paths
    - Check debug console for error messages
+
+## 📄 Future Plans
+
+As an interest-driven open source project, we aim to explore the following possibilities:
+
+### 🐛 Upcoming Fixes
+
+- Optimize parsing of nested thinking blocks and snippet blocks
+- Improve internationalization support (CN/EN) for better multilingual experience
+
+### 🔬 Technical Exploration
+
+- Investigate Cursor's operational mechanisms to implement:
+  - Parse Cursor Tools operations and parameter extraction
+  - Supported tool types:
+    - `read_file`: Read file contents
+    - `edit_file`: Edit file contents
+    - `list_dir`: List directory contents
+    - `codebase_search`: Search codebase
+    - `grep_search`: Text search
+    - `file_search`: Find files
+    - `run_terminal_command`: Execute commands
+    - `delete_file`: Delete files
+  - Identify current AI model in use
+  - Optimize workspace and conversation export logic
+  - Enhance keyword semantic extraction and analysis
+
+### 🚀 Vision
+
+We aim to explore building the extension into an intelligent assistant:
+
+1. **Context Continuity Enhancement**
+   - Mitigate context fragmentation from text length limitations
+   - Provide knowledge distillation for new conversation environments
+   - Maintain work continuity
+
+2. **Meta-Prompt Optimization Service**
+   - Analyze user input patterns based on workspace content
+   - Extract and preserve high-quality historical Meta-Prompts
+   - Assist in building personalized Cursorrules documentation
+
+> Note: As this is a passion project maintained alongside academic commitments, we look forward to the Cursor team and global AI programming community meeting users' growing personalized AI programming needs in more efficient ways.
 
 ## 📄 License
 
