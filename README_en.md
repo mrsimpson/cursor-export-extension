@@ -19,6 +19,8 @@ Export your Cursor Composer conversations to Markdown documents, preserving thin
 - 🔄 Maintain conversation context and formatting
 - 📂 Custom export path
 
+![Export Preview](assets/export-demo.png)
+
 ## 🚀 Installation
 
 ### Requirements
@@ -89,10 +91,9 @@ npm run watch
 
 ### Debug
 
-1. Open project in VS Code
-2. Press F5 to start debugging
-3. A new Cursor IDE window will open with the extension loaded
-4. Check debug console for logs
+1. Open Cursor IDE Developer Tools (Ctrl+Shift+I)
+2. Switch to Console tab
+3. Check extension logs and error messages
 
 ### Manual Installation
 

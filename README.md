@@ -19,6 +19,8 @@
 - 🔄 保持对话上下文和格式
 - 📂 自定义导出路径
 
+![导出预览](assets/export-demo.png)
+
 ## 🚀 安装说明
 
 ### 环境要求
@@ -89,10 +91,9 @@ npm run watch
 
 ### 调试
 
-1. 在 VS Code 中打开项目
-2. 按 F5 开始调试
-3. 将打开一个新的 Cursor IDE 窗口并加载扩展
-4. 在调试控制台查看日志
+1. 打开 Cursor IDE 开发者工具（Ctrl+Shift+I）
+2. 切换到 Console 标签页
+3. 查看扩展运行日志和错误信息
 
 ### 手动安装
 
@@ -154,5 +155,3 @@ MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 **Cursor Export Extension** © 2024 Tseka Luk. 基于 MIT 许可证发布。
 
 </div>
-
-```
