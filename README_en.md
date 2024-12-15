@@ -8,180 +8,24 @@
 
 [English](README_en.md) | [简体中文](README.md)
 
-Export your Cursor Composer conversations to beautiful Markdown documents with rich customization options.
+Export your Cursor Composer conversations to Markdown documents, preserving thinking blocks and assistant code snippets.
 
 </div>
 
 ## ✨ Features
 
-![Feature Preview](https://raw.githubusercontent.com/your-repo/cursor-export/main/assets/features.gif)
+- 📝 Export conversations to Markdown format
+- 💭 Preserve thinking blocks and assistant code snippets
+- 🔄 Maintain conversation context and formatting
+- 📂 Custom export path
 
-### 🎯 Core Features
+## 🚀 Installation
 
-- 📝 One-click export to Markdown format
-- 🎨 Beautiful graphical configuration interface
-- 🔄 Preserves conversation context and formatting
-- 📊 Supports metadata and statistics
-- 🕒 Smart timestamp management
-- 📂 Flexible file saving options
+### Requirements
 
-### 🛠️ Customization Options
-
-![Configuration Panel](https://raw.githubusercontent.com/your-repo/cursor-export/main/assets/config-panel.png)
-
-- **Metadata Options**
-
-  - Conversation ID and statistics
-  - Session timestamps
-  - Workspace information
-- **Content Options**
-
-  - Conversation topic summary
-  - Message timestamps
-  - Markdown formatting settings
-- **Save Options**
-
-  - Custom save location
-  - Smart file naming
-  - File overwrite protection
-
-## 🚀 Quick Start
-
-### 📥 Installation
-
-1. Open Extensions in Cursor IDE
-2. Search for "Cursor Export"
-3. Click Install
-4. Restart Cursor IDE
-
-### 💫 Usage
-
-1. Open Cursor IDE
-2. Click "Export All Conversations" in the status bar (bottom right)
-3. Select save location
-4. Click Export
-
-## 📝 Export Result
-
-![Export Preview](https://raw.githubusercontent.com/your-repo/cursor-export/main/assets/export-preview.png)
-
-- Structured Markdown document
-- Clear role markers for conversations
-- Elegant separators and formatting
-- Complete metadata information
-- Beautiful timestamp display
-
-## ⚙️ Extension Settings
-
-This extension contributes the following settings:
-
-- `cursorExport.defaultPath`: Default export path
-- `cursorExport.defaultOptions`: Default export options
-- `cursorExport.autoOpen`: Auto-open file after export
-- `cursorExport.dateFormat`: Timestamp format
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-<details>
-<summary>Can't see the export button?</summary>
-
-Check:
-
-1. Are you in a Composer conversation view?
-2. Is the extension properly installed?
-3. Have you restarted Cursor IDE?
-
-</details>
-
-<details>
-<summary>Export failed?</summary>
-
-Common causes:
-
-1. Conversation content access failed
-2. File permission issues
-3. Invalid storage path
-
-Solutions:
-
-- Ensure you're in the correct conversation view
-- Check file permissions
-- Verify storage path
-
-</details>
-
-<details>
-<summary>How to verify installation?</summary>
-
-Check extension directory:
-
-**Windows**
-
-```
-%LOCALAPPDATA%\Programs\cursor\resources\app\extensions\cursor-tools.cursor-export-extension-0.0.1\
-```
-
-**macOS**
-
-```
-/Applications/Cursor.app/Contents/Resources/app/extensions/cursor-tools.cursor-export-extension-0.0.1/
-```
-
-**Linux**
-
-```
-/usr/share/cursor/resources/app/extensions/cursor-tools.cursor-export-extension-0.0.1/
-```
-
-</details>
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
-## 🌟 Changelog
-
-### 0.0.1 (2024-12-08)
-
-- ✨ Initial release
-- 🎨 Graphical configuration interface
-- 🔧 Custom export options
-- 📝 Markdown format support
-- 🛠️ Error handling improvements
-
-## 💖 Support
-
-If you find this project helpful, please:
-
-- ⭐ Star the project
-- 📢 Share it with others
-- 🐛 Report issues
-- 🌟 Suggest features
-
-## 👥 Author
-
-- Email: zihoi.luk@foxmail.com
-
----
-
-<div align="center">
-
-**Cursor Export Extension** © 2024 Tseka Luk. Released under the MIT License.
-
-</div>
-
-## 📥 Installation
+- Node.js 14.x or higher
+- Cursor IDE
+- Administrator privileges (for installation)
 
 ### Install Steps
 
@@ -196,6 +40,60 @@ If you find this project helpful, please:
    ```
 4. Restart Cursor IDE
 
+### Installation Path
+
+The extension will be installed to:
+
+**Windows**
+
+```powershell
+%LOCALAPPDATA%\Programs\cursor\resources\app\extensions\cursor-tools.cursor-export-extension-0.0.1\
+```
+
+**macOS**
+
+```bash
+/Applications/Cursor.app/Contents/Resources/app/extensions/cursor-tools.cursor-export-extension-0.0.1/
+```
+
+**Linux**
+
+```bash
+/usr/share/cursor/resources/app/extensions/cursor-tools.cursor-export-extension-0.0.1/
+```
+
+## 💫 Usage
+
+1. Open Cursor IDE
+2. Click "Export All Conversations" in the status bar (bottom right)
+3. Select save location
+4. Click Export
+
+## 🛠️ Development
+
+### Build
+
+```bash
+# Install dependencies
+npm install
+
+# Install extension
+npm run install-extension
+
+# Compile TypeScript
+npm run compile
+
+# Development watch mode
+npm run watch
+```
+
+### Debug
+
+1. Open project in VS Code
+2. Press F5 to start debugging
+3. A new Cursor IDE window will open with the extension loaded
+4. Check debug console for logs
+
 ### Manual Installation
 
 ```bash
@@ -205,3 +103,54 @@ If you find this project helpful, please:
 # Unix
 npm run install-extension
 ```
+
+### Uninstall
+
+```bash
+# Windows (PowerShell Admin)
+.\scripts\uninstall.ps1
+
+# Unix
+# Manually delete extension directory from installation path above
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. Installation Failed
+
+   - Run as administrator
+   - Close Cursor IDE before installation
+   - Check file permissions
+2. Export Failed
+
+   - Ensure write permissions for save location
+   - Try different save paths
+   - Check debug console for error messages
+
+## 📄 License
+
+MIT License - see the [LICENSE](LICENSE) file for details
+
+## 🌟 Changelog
+
+### 0.0.1
+
+- ✨ Initial release
+- 📝 Basic Markdown export
+- 💭 Support for thinking blocks
+- 🔄 Preserve assistant code snippets
+
+## 👥 Contact
+
+- Email: zihoi.luk@foxmail.com
+- GitHub Issues: [Report Issues](https://github.com/TsekaLuk/Cursor-export-extension/issues)
+
+---
+
+<div align="center">
+
+**Cursor Export Extension** © 2024 Tseka Luk. Released under the MIT License.
+
+</div>

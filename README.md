@@ -1,6 +1,8 @@
 # Cursor Composer Export 对话记录导出
 
-<pre class="vditor-reset" placeholder="" contenteditable="true" spellcheck="false"><p data-block="0"><img src="https://file+.vscode-resource.vscode-cdn.net/e%3A/Desktop/Cursor-export-extension/assets/ix10tn-logo.svg" alt="Logo"/></p></pre>
+<div align="center">
+
+![Logo](assets/ix10tn-logo.svg)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
