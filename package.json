@@ -1,0 +1,86 @@
+{
+    "name": "cursor-export-extension",
+    "displayName": "Cursor Export Extension",
+    "description": "Export Cursor conversations to various formats",
+    "version": "0.0.1",
+    "publisher": "cursor-tools",
+    "icon": "assets/ix10tn-logo.png",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/TsekaLuk/Cursor-export-extension"
+    },
+    "engines": {
+        "vscode": "^1.85.0",
+        "cursor": "^1.0.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onView:cursor-composer",
+        "*"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "cursor-export.exportHistory",
+                "title": "导出对话记录",
+                "category": "Cursor Export"
+            },
+            {
+                "command": "cursor-export.testExportPath",
+                "title": "测试 - 检查导出路径",
+                "category": "Cursor Export"
+            }
+        ],
+        "menus": {
+            "statusBar": [
+                {
+                    "command": "cursor-export.exportHistory",
+                    "when": "resourceScheme == cursor-composer",
+                    "group": "navigation"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "cursor-export.exportHistory",
+                    "when": "resourceScheme == cursor-composer"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js",
+        "package": "vsce package --no-dependencies",
+        "install-extension": "node ./scripts/install.js",
+        "export": "ts-node"
+    },
+    "dependencies": {
+        "prettier": "^3.1.1",
+        "sql-formatter": "^15.0.2",
+        "sqlite": "^5.1.1",
+        "sqlite3": "^5.1.7"
+    },
+    "devDependencies": {
+        "@types/chai": "^5.0.1",
+        "@types/glob": "^8.1.0",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "18.x",
+        "@types/prettier": "^3.0.0",
+        "@types/sqlite3": "^3.1.11",
+        "@types/vscode": "^1.85.0",
+        "@typescript-eslint/eslint-plugin": "^6.15.0",
+        "@typescript-eslint/parser": "^6.15.0",
+        "@vscode/test-electron": "^2.3.8",
+        "chai": "^5.1.2",
+        "eslint": "^8.56.0",
+        "glob": "^10.3.10",
+        "mocha": "^10.2.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.3.3

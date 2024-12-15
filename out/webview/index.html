@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Conversations Export</title>
+    <style>
+        :root {
+            --background-color: var(--vscode-editor-background);
+            --text-color: var(--vscode-editor-foreground);
+            --border-color: var(--vscode-panel-border);
+            --hover-color: var(--vscode-list-hoverBackground);
+            --active-color: var(--vscode-list-activeSelectionBackground);
+            --heading-color: var(--vscode-editor-foreground);
+            --link-color: var(--vscode-textLink-foreground);
+            --code-background: var(--vscode-textCodeBlock-background);
+            --error-color: var(--vscode-errorForeground);
+            --warning-color: var(--vscode-warningForeground);
+            --success-color: var(--vscode-successForeground);
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--heading-color);
+            margin: 0;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            background-color: var(--active-color);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .button:hover {
+            background-color: var(--hover-color);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .conversation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .conversation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .conversation-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .conversation-info {
+            flex: 1;
+        }
+
+        .conversation-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .conversation-meta {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            display: flex;
+            gap: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 16px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .loading-spinner {
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--link-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--link-color);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-agent {
+            background-color: var(--success-color);
+            color: var(--background-color);
+        }
+
+        .badge-error {
+            background-color: var(--error-color);
+            color: var(--background-color);
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 20px;
+            background-color: var(--background-color);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .status-bar-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-bar-progress .progress-bar {
+            width: 200px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Cursor 对话导出</h1>
+            <div class="toolbar">
+                <button id="exportButton" class="button" onclick="exportConversations()" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 12l-4-4h2.5V3h3v5H12L8 12z"/>
+                        <path d="M2 13h12v-2H2v2z"/>
+                    </svg>
+                    导出全部对话
+                </button>
+                <button id="refreshButton" class="button" onclick="refreshList()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M14 8a6 6 0 1 1-1.76-4.24l1.53-1.53A8 8 0 1 0 16 8h-2zM8 0v3l4-4-4-4v3a8 8 0 0 0-8 8h2a6 6 0 0 1 6-6z"/>
+                    </svg>
+                    刷新列表
+                </button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <span>正在加载对话列表...</span>
+        </div>
+
+        <div id="progress" style="display: none;">
+            <div class="progress-bar">
+                <div id="progressBarFill" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <div id="progressText" class="progress-text"></div>
+        </div>
+
+        <div id="conversationList" class="conversation-list">
+            <!-- 对话列表将在这里动态生成 -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <p>没有找到任何对话</p>
+            <button class="button" onclick="refreshList()">刷新列表</button>
+        </div>
+    </div>
+
+    <div id="statusBar" class="status-bar" style="display: none;">
+        <div class="status-bar-progress">
+            <div class="progress-bar">
+                <div id="statusBarProgressFill" class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+            <span id="statusBarText"></span>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        let conversations = [];
+        let isExporting = false;
+
+        // 初始化
+        window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+                case 'update':
+                    updateConversationList(message.conversations);
+                    break;
+                case 'setLoading':
+                    setLoading(message.loading);
+                    break;
+                case 'updateProgress':
+                    updateProgress(message.current, message.total, message.message);
+                    break;
+                case 'updateExportProgress':
+                    updateExportProgress(message.current, message.total, message.currentName);
+                    break;
+                case 'resetExportProgress':
+                    resetExportProgress();
+                    break;
+            }
+        });
+
+        function updateConversationList(newConversations) {
+            conversations = newConversations;
+            const list = document.getElementById('conversationList');
+            const empty = document.getElementById('emptyState');
+            const exportBtn = document.getElementById('exportButton');
+
+            if (!conversations || conversations.length === 0) {
+                list.style.display = 'none';
+                empty.style.display = 'block';
+                exportBtn.disabled = true;
+                return;
+            }
+
+            list.style.display = 'flex';
+            empty.style.display = 'none';
+            exportBtn.disabled = false;
+
+            list.innerHTML = conversations.map(conv => `
+                <div class="conversation-item">
+                    <div class="conversation-info">
+                        <div class="conversation-name">
+                            ${escapeHtml(conv.name)}
+                            ${conv.mode === 'agent' ? '<span class="badge badge-agent">智能助手</span>' : ''}
+                            ${conv.hasError ? '<span class="badge badge-error">有错误</span>' : ''}
+                        </div>
+                        <div class="conversation-meta">
+                            <span class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+                                    <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm0 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2zm1 2v4.58l3.3 3.3-1.4 1.4L7 9.4V4h2z"/>
+                                </svg>
+                                ${formatDate(conv.timestamp)}
+                            </span>
+                            <span class="meta-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+                                    <path d="M1 3h14v2H1V3zm0 4h14v2H1V7zm0 4h14v2H1v-2z"/>
+                                </svg>
+                                ${conv.messageCount} 条消息
+                            </span>
+                            <span class="meta-item">ID: ${escapeHtml(conv.id)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setLoading(loading) {
+            document.getElementById('loading').style.display = loading ? 'flex' : 'none';
+            document.getElementById('exportButton').disabled = loading;
+            document.getElementById('refreshButton').disabled = loading;
+            document.getElementById('progress').style.display = loading ? 'block' : 'none';
+        }
+
+        function updateProgress(current, total, message) {
+            const progress = document.getElementById('progress');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const progressText = document.getElementById('progressText');
+
+            progress.style.display = 'block';
+            const percentage = (current / total) * 100;
+            progressBarFill.style.width = `${percentage}%`;
+            progressText.textContent = message;
+        }
+
+        function updateExportProgress(current, total, currentName) {
+            const statusBar = document.getElementById('statusBar');
+            const progressFill = document.getElementById('statusBarProgressFill');
+            const statusText = document.getElementById('statusBarText');
+
+            statusBar.style.display = 'flex';
+            const percentage = (current / total) * 100;
+            progressFill.style.width = `${percentage}%`;
+            statusText.textContent = `正在导出: ${currentName} (${current}/${total})`;
+        }
+
+        function resetExportProgress() {
+            document.getElementById('statusBar').style.display = 'none';
+            document.getElementById('statusBarProgressFill').style.width = '0%';
+            document.getElementById('statusBarText').textContent = '';
+        }
+
+        function exportConversations() {
+            if (isExporting) return;
+            isExporting = true;
+            vscode.postMessage({ command: 'export' });
+        }
+
+        function refreshList() {
+            vscode.postMessage({ command: 'refresh' });
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) { // 1分钟内
+                return '刚刚';
+            } else if (diff < 3600000) { // 1小时内
+                return Math.floor(diff / 60000) + '分钟前';
+            } else if (diff < 86400000) { // 24小时内
+                return Math.floor(diff / 3600000) + '小时前';
+            } else if (diff < 2592000000) { // 30天内
+                return Math.floor(diff / 86400000) + '天前';
+            } else {
+                return date.toLocaleString();
+            }
+        }
+    </script>
+</body>
+</html> 
