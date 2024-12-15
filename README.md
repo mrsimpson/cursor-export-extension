@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Logo](assets/ix10tn-logo.svg)
+![Logo](assets/ix10tn-logo.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
