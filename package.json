@@ -27,11 +27,6 @@
                 "command": "cursor-export.exportHistory",
                 "title": "Export History",
                 "category": "Cursor Export"
-            },
-            {
-                "command": "cursor-export.testExportPath",
-                "title": "Test - Check Export Path",
-                "category": "Cursor Export"
             }
         ],
         "menus": {
@@ -51,8 +46,7 @@
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
         "package": "vsce package --no-dependencies",
-        "install-extension": "node ./scripts/install.js",
-        "export": "ts-node"
+        "install-extension": "node ./scripts/install.js"
     },
     "dependencies": {
         "prettier": "^3.1.1",

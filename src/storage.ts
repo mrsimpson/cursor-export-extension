@@ -36,16 +36,16 @@ import {
 } from './types/toolInference';
 import { extractKeywords } from './utils';
 
-// 数据库连接池配置
+// Database connection pool configuration
 const DB_POOL_CONFIG = {
-    maxSize: 5,                  // 最大连接数
-    idleTimeout: 30000,         // 空闲超时时间（毫秒）
-    acquireTimeout: 10000,      // 获取连接超时时间（毫秒）
-    retryAttempts: 3,           // 重试次数
-    retryDelay: 1000           // 重试延迟（毫秒）
+    maxSize: 5,                  // Maximum number of connections
+    idleTimeout: 30000,         // Idle timeout (milliseconds)
+    acquireTimeout: 10000,      // Connection acquisition timeout (milliseconds)
+    retryAttempts: 3,           // Number of retry attempts
+    retryDelay: 1000           // Retry delay (milliseconds)
 };
 
-// 数据库连接池
+// Database connection pool
 interface PooledConnection {
     db: SQLiteDatabase;
     lastUsed: number;
@@ -60,7 +60,7 @@ const dbPool: {
     workspace: []
 };
 
-// 清理空闲连接
+// Clean up idle connections
 async function cleanIdleConnections() {
     const now = Date.now();
     for (const type of ['global', 'workspace'] as const) {
@@ -71,23 +71,23 @@ async function cleanIdleConnections() {
                 try {
                     await conn.db.close();
                     pool.splice(i, 1);
-                    log(`关闭空闲连接: ${type}`, 'info');
+                    log(`Closed idle connection: ${type}`, 'info');
                 } catch (err) {
-                    log(`关闭空闲连接失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+                    log(`Failed to close idle connection: ${err instanceof Error ? err.message : String(err)}`, 'error');
                 }
             }
         }
     }
 }
 
-// 定期清理空闲连接
+// Periodically clean up idle connections
 setInterval(cleanIdleConnections, DB_POOL_CONFIG.idleTimeout);
 
-// 获取可用连接
+// Get available connection
 async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDatabase> {
     const pool = dbPool[type];
     
-    // 1. 尝试获取空闲连接
+    // 1. Try to get an idle connection
     const idleConn = pool.find(conn => !conn.inUse);
     if (idleConn) {
         idleConn.inUse = true;
@@ -95,7 +95,7 @@ async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDataba
         return idleConn.db;
     }
     
-    // 2. 如果连接池未满，创建新连接
+    // 2. If the pool is not full, create a new connection
     if (pool.length < DB_POOL_CONFIG.maxSize) {
         let attempts = 0;
         let lastError: Error | null = null;
@@ -106,7 +106,7 @@ async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDataba
                 const dbPath = type === 'global' ? paths.global : paths.workspace;
 
                 if (!fs.existsSync(dbPath)) {
-                    throw new Error(`数据库文件不存在: ${dbPath}`);
+                    throw new Error(`Database file does not exist: ${dbPath}`);
                 }
 
                 const db = await open({
@@ -123,7 +123,7 @@ async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDataba
                 return db;
             } catch (err) {
                 lastError = err instanceof Error ? err : new Error(String(err));
-                log(`创建数据库连接失败 (尝试 ${attempts + 1}/${DB_POOL_CONFIG.retryAttempts}): ${lastError.message}`, 'warn');
+                log(`Failed to create database connection (attempt ${attempts + 1}/${DB_POOL_CONFIG.retryAttempts}): ${lastError.message}`, 'warn');
                 attempts++;
                 if (attempts < DB_POOL_CONFIG.retryAttempts) {
                     await new Promise(resolve => setTimeout(resolve, DB_POOL_CONFIG.retryDelay));
@@ -131,10 +131,10 @@ async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDataba
             }
         }
         
-        throw new Error(`无法创建数据库连接: ${lastError?.message}`);
+        throw new Error(`Failed to create database connection: ${lastError?.message}`);
     }
     
-    // 3. 如果连接池已满，等待可用连接
+    // 3. If the pool is full, wait for an available connection
     const startTime = Date.now();
     while (Date.now() - startTime < DB_POOL_CONFIG.acquireTimeout) {
         const conn = pool.find(conn => !conn.inUse);
@@ -146,10 +146,10 @@ async function getConnection(type: 'global' | 'workspace'): Promise<SQLiteDataba
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    throw new Error('获取数据库连接超时');
+    throw new Error('Database connection acquisition timeout');
 }
 
-// 释放连接
+// Release connection
 function releaseConnection(type: 'global' | 'workspace', db: SQLiteDatabase) {
     const pool = dbPool[type];
     const conn = pool.find(conn => conn.db === db);
@@ -159,51 +159,51 @@ function releaseConnection(type: 'global' | 'workspace', db: SQLiteDatabase) {
     }
 }
 
-// 打开数据库连接
+// Open database connection
 async function openDatabase(type: 'global' | 'workspace'): Promise<SQLiteDatabase> {
     try {
         return await getConnection(type);
     } catch (err) {
-        log(`打开数据库失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to open database: ${err instanceof Error ? err.message : String(err)}`, 'error');
         throw err;
     }
 }
 
-// 关闭数据库连接
+// Close database connection
 async function closeDatabase(type?: 'global' | 'workspace'): Promise<void> {
     try {
         if (type) {
-            // 关闭指定类型的所有连接
+            // Close all connections of the specified type
             const pool = dbPool[type];
             for (const conn of pool) {
                 try {
                     await conn.db.close();
                 } catch (err) {
-                    log(`关闭数据库连接失败: ${err instanceof Error ? err.message : String(err)}`, 'warn');
+                    log(`Failed to close database connection: ${err instanceof Error ? err.message : String(err)}`, 'warn');
                 }
             }
             pool.length = 0;
         } else {
-            // 关闭所有连接
+            // Close all connections
             for (const type of ['global', 'workspace'] as const) {
                 const pool = dbPool[type];
                 for (const conn of pool) {
                     try {
                         await conn.db.close();
                     } catch (err) {
-                        log(`关闭数据库连接失败: ${err instanceof Error ? err.message : String(err)}`, 'warn');
+                        log(`Failed to close database connection: ${err instanceof Error ? err.message : String(err)}`, 'warn');
                     }
                 }
                 pool.length = 0;
             }
         }
     } catch (err) {
-        log(`关闭数据库失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to close database: ${err instanceof Error ? err.message : String(err)}`, 'error');
         throw err;
     }
 }
 
-// 执行数据库事务
+// Execute database transaction
 async function withTransaction<T>(
     db: SQLiteDatabase,
     callback: (db: SQLiteDatabase) => Promise<T>
@@ -219,7 +219,7 @@ async function withTransaction<T>(
     }
 }
 
-// 获取Cursor配置目录路径
+// Get Cursor configuration directory path
 function getCursorConfigPath(): string {
     const platform = process.platform;
     const home = os.homedir();
@@ -232,11 +232,11 @@ function getCursorConfigPath(): string {
         case 'linux':
             return path.join(home, '.config', 'Cursor');
         default:
-            throw new Error(`不支持的操作系统: ${platform}`);
+            throw new Error(`Unsupported operating system: ${platform}`);
     }
 }
 
-// 获取数据库路径
+// Get database paths
 function getDatabasePaths(): { global: string; workspace: string } {
     const cursorPath = getCursorConfigPath();
     const userPath = path.join(cursorPath, 'User');
@@ -247,16 +247,16 @@ function getDatabasePaths(): { global: string; workspace: string } {
     };
 }
 
-// 检测代码语言
+// Detect code language
 function detectLanguage(lang: string): string {
     if (!lang) {return 'plaintext';}
     
-    // 移除assistant_snippet_前缀
+    // Remove assistant_snippet_ prefix
     if (lang.startsWith('assistant_snippet_')) {
         return 'plaintext';
     }
 
-    // 标准化语言名称
+    // Standardize language name
     const languageMap: Record<string, string> = {
         'js': 'javascript',
         'ts': 'typescript',
@@ -281,7 +281,7 @@ function detectLanguage(lang: string): string {
     return languageMap[lang.toLowerCase()] || lang.toLowerCase();
 }
 
-// 格式化日期
+// Format date
 function formatDate(timestamp: number | string): string {
     if (!timestamp) {return 'Invalid Date';}
     try {
@@ -291,47 +291,47 @@ function formatDate(timestamp: number | string): string {
     }
 }
 
-// 获取可读的工作区名称
+// Get readable workspace name
 function getReadableWorkspaceName(workspaceId: string): string {
     try {
-        // 1. 从工作区路径中提取项目名称
+        // 1. Extract project name from workspace path
         const workspacePath = path.join(getCursorConfigPath(), 'User', 'workspaceStorage', workspaceId);
         if (fs.existsSync(workspacePath)) {
-            // 尝试读取工作区配置
+            // Try to read workspace configuration
             const configPath = path.join(workspacePath, 'workspace.json');
             if (fs.existsSync(configPath)) {
                 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
                 if (config.folder) {
-                    // 从文件夹路径中提取项目名称
+                    // Extract project name from folder path
                     return path.basename(config.folder);
                 }
             }
             
-            // 如果找不到配置，尝试从目录名中提取有意义的信息
+            // If no configuration found, try to extract meaningful information from directory name
             const parentDir = path.dirname(workspacePath);
             if (fs.existsSync(parentDir)) {
                 const dirs = fs.readdirSync(parentDir);
                 const matchingDir = dirs.find(dir => dir.includes(workspaceId));
                 if (matchingDir) {
-                    // 移除哈希部分，保留可能的项目名称
+                    // Remove hash part, keep possible project name
                     return matchingDir.replace(/[0-9a-f]{32}/i, '').replace(/[-_]/g, ' ').trim();
                 }
             }
         }
     } catch (err) {
-        log(`获取工作区名称失败: ${err instanceof Error ? err.message : String(err)}`, 'warn');
+        log(`Failed to get workspace name: ${err instanceof Error ? err.message : String(err)}`, 'warn');
     }
     
-    // 如果无法获取更有意义的名称，返回工作区ID的简短版本
+    // If unable to get a more meaningful name, return a shortened version of the workspace ID
     return `ws-${workspaceId.substring(0, 6)}`;
 }
 
-// 去重处理
+// Deduplicate conversations
 function deduplicateConversations(conversations: Record<string, ConversationWithSource>): Record<string, any> {
     const dedupedData: Record<string, any> = {};
     const convMap = new Map<string, ConversationWithSource[]>();
 
-    // 按对话ID分组
+    // Group conversations by conversation ID
     Object.entries(conversations).forEach(([key, conv]) => {
         const convId = key.split(':')[1];
         if (!convMap.has(convId)) {
@@ -340,27 +340,27 @@ function deduplicateConversations(conversations: Record<string, ConversationWith
         convMap.get(convId)!.push(conv);
     });
 
-    // 处理每组重复的对话
+    // Process each group of duplicate conversations
     convMap.forEach((convs, convId) => {
         if (convs.length === 1) {
-            // 没有重复，直接使用
+            // No duplicates, use as is
             dedupedData[`composerData:${convId}`] = convs[0].data;
         } else {
-            // 有重复，需要选择最新的版本
-            log(`发现重复对话 ${convId}`, 'info');
+            // Duplicates exist, need to choose the latest version
+            log(`Found duplicate conversation ${convId}`, 'info');
             convs.forEach(conv => {
-                log(`来源: ${conv.source}, 数据库: ${conv.dbPath}`, 'info');
-                log(`更新时间: ${formatDate(conv.data.lastUpdatedAt)}`, 'info');
+                log(`Source: ${conv.source}, Database: ${conv.dbPath}`, 'info');
+                log(`Last updated: ${formatDate(conv.data.lastUpdatedAt)}`, 'info');
             });
 
-            // 按最后更新时间排序，选择最新的
+            // Sort by last updated time, choose the latest
             const newest = convs.reduce((prev, curr) => {
                 const prevTime = prev.data.lastUpdatedAt || 0;
                 const currTime = curr.data.lastUpdatedAt || 0;
                 return currTime > prevTime ? curr : prev;
             });
 
-            log(`选择来源 ${newest.source} 的版本（${formatDate(newest.data.lastUpdatedAt)}）`, 'info');
+            log(`Choosing version from source ${newest.source} (${formatDate(newest.data.lastUpdatedAt)})`, 'info');
             dedupedData[`composerData:${convId}`] = newest.data;
         }
     });
@@ -368,22 +368,22 @@ function deduplicateConversations(conversations: Record<string, ConversationWith
     return dedupedData;
 }
 
-// 处理难以解析的反引号模式
+// Handle difficult backtick patterns
 function handleDifficultBackticks(text: string): string {
-    // 检测连续的4个或更多反引号
+    // Detect consecutive 4 or more backticks
     const difficultPattern = /(`{4,})/g;
     return text.replace(difficultPattern, (match) => {
-        // 将难以解析的反引号转换为emoji工具调用
+        // Convert difficult backticks to emoji tool call
         return `<function_calls><invoke name="emoji"><parameter name="emoji">code</parameter></invoke></function_calls>`;
     });
 }
 
-// 提取代码块
+// Extract code blocks
 function parseCodeBlocks(text: string): MessageContent[] {
     const contents: MessageContent[] = [];
     let processedRanges: Array<{start: number, end: number}> = [];
     
-    // 处理 assistant_snippet 格式
+    // Handle assistant_snippet format
     const snippetRegex = /```assistant_snippet_[A-Za-z0-9+/]+\.txt\s*([\s\S]*?)```/g;
     let snippetMatch;
     while ((snippetMatch = snippetRegex.exec(text)) !== null) {
@@ -408,10 +408,10 @@ function parseCodeBlocks(text: string): MessageContent[] {
         }
     }
 
-    // 处理其他代码块
+    // Handle other code blocks
     const codeBlockRegex = /(`+)(\w*)\n([\s\S]*?)\1/g;
     while ((snippetMatch = codeBlockRegex.exec(text)) !== null) {
-        // 检查这个范围是否已经被处理过
+        // Check if this range has already been processed
         const isProcessed = snippetMatch && processedRanges.some(range => 
             snippetMatch!.index >= range.start && snippetMatch!.index < range.end
         );
@@ -443,13 +443,13 @@ function parseCodeBlocks(text: string): MessageContent[] {
         }
     }
 
-    // 按原始位置排序
+    // Sort by original position
     return contents.sort((a, b) => 
         (a.metadata?.originalRange?.start || 0) - (b.metadata?.originalRange?.start || 0)
     );
 }
 
-// 解析消息内容
+// Parse message content
 function parseMessageContent(text: string): MessageContent[] {
     const contents: MessageContent[] = [];
     let currentContext: {
@@ -459,10 +459,10 @@ function parseMessageContent(text: string): MessageContent[] {
     } = {};
     
     try {
-        // 预处理文本，处理难以解析的反引号模式
+        // Preprocess text, handle difficult backtick patterns
         text = handleDifficultBackticks(text);
 
-        // 保留原始空行信息
+        // Preserve original empty line information
         const lines = text.split('\n');
         const emptyLineIndices = lines.reduce((acc, line, index) => {
             if (line.trim() === '') {
@@ -471,7 +471,7 @@ function parseMessageContent(text: string): MessageContent[] {
             return acc;
         }, [] as number[]);
 
-        // 提取thinking块
+        // Extract thinking blocks
         const thinkingRegex = /```thinking\s*([\s\S]*?)```/g;
         let thinkingMatch;
         while ((thinkingMatch = thinkingRegex.exec(text)) !== null) {
@@ -491,7 +491,7 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 提取assistant_snippet块
+        // Extract assistant_snippet blocks
         const snippetRegex = /```assistant_snippet_[A-Za-z0-9+/]+\.txt[\r\n\t\f\v ]*\n([\s\S]*?)[\r\n\t\f\v ]*```/g;
         let snippetMatch: RegExpExecArray | null;
         while ((snippetMatch = snippetRegex.exec(text)) !== null) {
@@ -512,11 +512,11 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 提取代码块
+        // Extract code blocks
         const codeBlocks = parseCodeBlocks(text);
         contents.push(...codeBlocks);
 
-        // 提取工具调用块 - 改进XML标记配
+        // Extract tool call blocks - improved XML tag configuration
         const toolCallRegex = /<function_calls>\s*<invoke name="([^"]+)">([\s\S]*?)<\/antml:invoke>\s*<\/antml:function_calls>/g;
         let toolMatch;
         let hasToolCalls = false;
@@ -525,7 +525,7 @@ function parseMessageContent(text: string): MessageContent[] {
             const toolName = toolMatch[1];
             const paramsContent = toolMatch[2];
             
-            // 解析工具参数
+            // Parse tool parameters
             const params: Record<string, any> = {};
             const paramMatches = paramsContent.matchAll(/<parameter name="([^"]+)">([\s\S]*?)<\/antml:parameter>/g);
             for (const paramMatch of paramMatches) {
@@ -539,7 +539,7 @@ function parseMessageContent(text: string): MessageContent[] {
                 }
             }
 
-            // 创建工具调用内容
+            // Create tool call content
             if (toolMatch[0].trim()) {
                 const toolCallContent = {
                     type: 'tool_call' as const,
@@ -553,7 +553,7 @@ function parseMessageContent(text: string): MessageContent[] {
                     }
                 };
                 
-                // 特殊处理emoji工具调用
+                // Special handling for emoji tool calls
                 if (toolName === 'emoji') {
                     const emojiContent = {
                         type: 'text' as const,
@@ -572,7 +572,7 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 提取工具结果
+        // Extract tool results
         const toolResultRegex = /<function_results>([\s\S]*?)<\/function_results>/g;
         let toolResultMatch: RegExpExecArray | null;
         while ((toolResultMatch = toolResultRegex.exec(text)) !== null) {
@@ -611,7 +611,7 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 改进工具推断逻辑
+        // Improved tool inference logic
         if (!hasToolCalls) {
             const paragraphs = splitIntoParagraphs(text, emptyLineIndices);
             const toolInferences = inferToolCalls(paragraphs);
@@ -639,7 +639,7 @@ function parseMessageContent(text: string): MessageContent[] {
                 
                 contents.push(toolCallContent);
                 
-                // 添加相关内容
+                // Add related content
                 if (inference.relatedContent) {
                     inference.relatedContent.forEach(content => {
                         content.metadata = {
@@ -652,7 +652,7 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 提取function_results标签
+        // Extract function_results tags
         let resultMatch: RegExpExecArray | null;
         const functionResultsRegex = /(`+)<function_results>([\s\S]*?)<\/function_results>\1/g;
         while ((resultMatch = functionResultsRegex.exec(text)) !== null) {
@@ -670,7 +670,7 @@ function parseMessageContent(text: string): MessageContent[] {
             }
         }
 
-        // 处理剩余文本
+        // Handle remaining text
         const remainingText = text.replace(functionResultsRegex, '').trim();
         if (remainingText) {
             contents.push({
@@ -686,13 +686,13 @@ function parseMessageContent(text: string): MessageContent[] {
 
         return contents;
     } catch (error) {
-        log(`解析消息内容失败: ${error instanceof Error ? error.message : String(error)}`, 'error');
+        log(`Failed to parse message content: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
 
     return contents;
 }
 
-// 辅助函数
+// Helper functions
 
 function splitIntoParagraphs(text: string, emptyLineIndices: number[]): string[] {
     const lines = text.split('\n');
@@ -705,7 +705,7 @@ function splitIntoParagraphs(text: string, emptyLineIndices: number[]): string[]
                 paragraphs.push(currentParagraph.join('\n'));
                 currentParagraph = [];
             }
-            // 保留空行作为单独的段落
+            // Preserve empty line as separate paragraph
             paragraphs.push('');
         } else {
             currentParagraph.push(line);
@@ -749,7 +749,7 @@ function inferToolCalls(paragraphs: string[]): Array<{
         const paragraph = paragraphs[i];
         const nextParagraph = i < paragraphs.length - 1 ? paragraphs[i + 1] : null;
 
-        // 分析段落内容和上下文
+        // Analyze paragraph content and context
         const analysis = analyzeToolContext(paragraph, nextParagraph, currentContext);
         
         if (analysis.tool) {
@@ -794,7 +794,7 @@ function analyzeToolContext(
     contentType?: string;
     relationType?: string;
 } {
-    // 工具模式匹配
+    // Tool mode matching
     for (const pattern of toolPatterns) {
         const match = matchToolPattern(paragraph, pattern);
         if (match) {
@@ -808,7 +808,7 @@ function analyzeToolContext(
         }
     }
 
-    // 上下文相关性分析
+    // Context relevance analysis
     if (currentContext.tool) {
         const relationAnalysis = analyzeRelation(paragraph, currentContext);
         if (relationAnalysis.isRelated) {
@@ -846,12 +846,12 @@ function generateContextId(): string {
     return `ctx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// 解析Markdown元素
+// Parse Markdown elements
 function parseMarkdownElements(text: string, emptyLineIndices?: number[]): MessageContent[] {
     const elements: MessageContent[] = [];
     let currentText = '';
 
-    // 解析题
+    // Parse headings
     const headings = text.match(/^#{1,6}\s+.+$/gm);
     if (headings) {
         headings.forEach(heading => {
@@ -869,7 +869,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 解析列表
+    // Parse lists
     const lists = text.match(/^[\s-]*[-*+]\s+.+$/gm);
     if (lists) {
         lists.forEach(item => {
@@ -885,7 +885,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 解析引用
+    // Parse quotes
     const quotes = text.match(/^>\s+.+$/gm);
     if (quotes) {
         quotes.forEach(quote => {
@@ -901,7 +901,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 解析链接
+    // Parse links
     const links = text.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
     for (const link of links) {
         elements.push({
@@ -917,7 +917,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 解析表格
+    // Parse tables
     const tables = text.match(/\|.+\|[\r\n]+\|[-:| ]+\|[\r\n]+((?:\|.+\|[\r\n]*)+)/g);
     if (tables) {
         tables.forEach(table => {
@@ -933,7 +933,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 解析行内代码
+    // Parse inline codes
     const inlineCodes = text.match(/`[^`]+`/g);
     if (inlineCodes) {
         inlineCodes.forEach(code => {
@@ -949,7 +949,7 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
         });
     }
 
-    // 处理剩余文本
+    // Handle remaining text
     currentText = text
         .replace(/^#{1,6}\s+.+$/gm, '')
         .replace(/^[\s-]*[-*+]\s+.+$/gm, '')
@@ -969,43 +969,43 @@ function parseMarkdownElements(text: string, emptyLineIndices?: number[]): Messa
     return elements;
 }
 
-// 解析消息数据
+// Parse message data
 function parseMessages(data: any): Message[] {
     return data.conversation?.map((msg: any) => {
-        // 基础时间戳，如果没有时间戳则使用当前时间
+        // Basic timestamp, if no timestamp then use current time
         const timestamp = msg.timestamp || Date.now();
         
-        // 处理工具调用
+        // Handle tool calls
         let toolCalls = [];
         let toolResults = [];
         let intermediateChunks = [];
         let capabilityStatuses: CapabilityStatuses = {};
 
-        // 处理工具调用
+        // Handle tool calls
         if (msg.toolCalls && Array.isArray(msg.toolCalls)) {
             toolCalls = msg.toolCalls.map((call: any) => ({
                 ...call,
-                timestamp: call.timestamp || timestamp + 1000 // 工具调用时间戳比消息晚1秒
+                timestamp: call.timestamp || timestamp + 1000 // Tool call timestamp is 1 second after message
             }));
         }
 
-        // 处理工具调用结果
+        // Handle tool call results
         if (msg.toolResults && Array.isArray(msg.toolResults)) {
             toolResults = msg.toolResults;
         }
 
-        // 处理中间输出块
+        // Handle intermediate output chunks
         if (msg.intermediateOutput && Array.isArray(msg.intermediateOutput)) {
             intermediateChunks = msg.intermediateOutput;
         } else if (msg.chunks && Array.isArray(msg.chunks)) {
             intermediateChunks = msg.chunks;
         }
 
-        // 处理能力状态
+        // Handle capability statuses
         if (msg.capabilityStatuses) {
             capabilityStatuses = msg.capabilityStatuses;
         } else if (msg.capabilities?.status) {
-            // 转换能力状态
+            // Convert capability statuses
             capabilityStatuses = Object.entries(msg.capabilities.status).reduce<CapabilityStatuses>((acc, [key, value]) => {
                 if (Array.isArray(value)) {
                     acc[key] = value.map((v: any) => ({
@@ -1021,7 +1021,7 @@ function parseMessages(data: any): Message[] {
             }, {});
         }
 
-        // 处理工具调用状态
+        // Handle tool call statuses
         if (toolCalls.length > 0) {
             const toolCallStatuses: CapabilityStatus[] = toolCalls.map((call: any) => ({
                 type: call.name,
@@ -1055,22 +1055,22 @@ function parseMessages(data: any): Message[] {
     }) || [];
 }
 
-// 创建对话数据对象
+// Create conversation data object
 function createConversationData(id: string, data: any, messages: Message[]): ConversationData {
-    // 计算最后更新时间
+    // Calculate last updated time
     const lastTimestamp = Math.max(
         ...messages.map(m => m.timestamp || 0),
         ...messages.flatMap(m => (m.metadata?.toolCalls || []).map(c => c.timestamp || 0))
     );
 
-    // 获取最后一个工具调用
+    // Get last tool call
     const lastToolCall = messages
         .flatMap(m => m.metadata?.toolCalls || [])
         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
         [0];
 
     const metadata: ConversationMetadata = {
-        name: data.name || '未命名话',
+        name: data.name || 'Unnamed Conversation',
         mode: data.isAgentic ? 'agent' : 'normal',
         isAgentic: data.isAgentic || false,
         createdAt: data.createdAt || Date.now(),
@@ -1100,7 +1100,7 @@ function createConversationData(id: string, data: any, messages: Message[]): Con
         tags: []
     };
 
-    // 添加标签
+    // Add tags
     metadata.tags = detectTags({ id, messages, metadata });
 
     return {
@@ -1110,7 +1110,7 @@ function createConversationData(id: string, data: any, messages: Message[]): Con
     };
 }
 
-// 计算统计信息
+// Calculate statistics
 function calculateStatistics(messages: Message[]): ConversationMetadata['statistics'] {
     const userMessages = messages.filter(m => m.role === 'user');
     const assistantMessages = messages.filter(m => m.role === 'assistant');
@@ -1122,23 +1122,23 @@ function calculateStatistics(messages: Message[]): ConversationMetadata['statist
     };
 }
 
-// 检测意图
+// Detect intent
 function detectIntent(messages: Message[]): ConversationMetadata['intent'] {
-    // 提取所有文本
+    // Extract all text
     const allText = messages
         .map(m => m.content)
         .join(' ');
 
-    // 提取关键词
+    // Extract keywords
     const keywords = Array.from(new Set(
         allText.match(/\b\w{4,}\b/g) || []
     )).filter(word => {
-        // 滤掉常见的停用词
+        // Filter out common stop words
         const stopWords = new Set(['this', 'that', 'these', 'those', 'what', 'when', 'where', 'which', 'who', 'whom', 'whose', 'why', 'how']);
         return !stopWords.has(word.toLowerCase());
     });
 
-    // 检测意图类别
+    // Detect intent category
     const patterns: Record<string, RegExp> = {
         codeGeneration: /(?:create|generate|write|implement|build)\b/i,
         debugging: /(?:debug|fix|solve|error|issue|problem|bug)\b/i,
@@ -1160,21 +1160,21 @@ function detectIntent(messages: Message[]): ConversationMetadata['intent'] {
 
     return {
         category: detectedCategory,
-        confidence: Math.min(maxConfidence * 2, 1), // 调整置信度范围到 0-1
-        keywords: keywords.slice(0, 10) // 只保留前10个关键词
+        confidence: Math.min(maxConfidence * 2, 1), // Adjust confidence range to 0-1
+        keywords: keywords.slice(0, 10) // Only keep the first 10 keywords
     };
 }
 
-// 检测标签
+// Detect tags
 function detectTags(params: { id: string; messages: Message[]; metadata: ConversationMetadata }): string[] {
     const tags = new Set<string>();
     
-    // 添加基于意图的标签
+    // Add tags based on intent
     if (params.metadata.intent?.category) {
         tags.add(params.metadata.intent.category);
     }
 
-    // 添加基于代码语言的标签
+    // Add tags based on code language
     const codeLanguages = new Set<string>();
     params.messages.forEach(msg => {
         const contents = parseMessageContent(msg.content);
@@ -1188,12 +1188,12 @@ function detectTags(params: { id: string; messages: Message[]; metadata: Convers
         tags.add(`lang:${lang}`);
     });
 
-    // 添加基于文件的标签
+    // Add tags based on files
     if (params.metadata.files.length > 0) {
         tags.add('has-files');
     }
 
-    // 添加基于状态的标签
+    // Add tags based on status
     if (params.metadata.status.hasError) {
         tags.add('has-error');
     }
@@ -1201,7 +1201,7 @@ function detectTags(params: { id: string; messages: Message[]; metadata: Convers
         tags.add('completed');
     }
 
-    // 添加基于内容特征的标签
+    // Add tags based on content features
     const contentTypes = new Set<string>();
     params.messages.forEach(msg => {
         const contents = parseMessageContent(msg.content);
@@ -1226,13 +1226,13 @@ function detectTags(params: { id: string; messages: Message[]; metadata: Convers
     return Array.from(tags);
 }
 
-// 从数据库获取对话
+// Get conversation from database
 async function getConversationFromDB(id: string): Promise<ConversationData | null> {
     let globalDb: SQLiteDatabase | null = null;
     let workspaceDb: SQLiteDatabase | null = null;
 
     try {
-        // 1. 首先从全局存储获取完整对话数据
+        // 1. First try to get complete conversation data from global storage
         globalDb = await openDatabase('global');
         const result = await withTransaction(globalDb, async (db) => {
             const conversationData = await db.get(
@@ -1246,18 +1246,18 @@ async function getConversationFromDB(id: string): Promise<ConversationData | nul
                     const messages = parseMessages(data);
                     
                     if (messages.length === 0) {
-                        log('对话不包含任何消息', 'warn');
+                        log('Conversation contains no messages', 'warn');
                         return null;
                     }
 
                     return createConversationData(id, data, messages);
                 } catch (parseErr) {
-                    log(`解析对话数据失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
+                    log(`Failed to parse conversation data: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
                     return null;
                 }
             }
 
-            // 2. 如果没找到，检查工作区是否有对话引用
+            // 2. If not found, check if workspace has conversation reference
             workspaceDb = await openDatabase('workspace');
             const workspaceRef = await workspaceDb.get(
                 'SELECT value FROM ItemTable WHERE key = ?',
@@ -1267,7 +1267,7 @@ async function getConversationFromDB(id: string): Promise<ConversationData | nul
             if (workspaceRef) {
                 try {
                     const refData = JSON.parse(workspaceRef.value);
-                    // 如果找到引用，再次尝试从全局存储获取
+                    // If reference found, try global storage again
                     if (refData.composerId) {
                         const refConversation = await db.get(
                             'SELECT value FROM cursorDiskKV WHERE key = ?',
@@ -1279,7 +1279,7 @@ async function getConversationFromDB(id: string): Promise<ConversationData | nul
                             const messages = parseMessages(data);
                             
                             if (messages.length === 0) {
-                                log('引用的对话不包含任何消息', 'warn');
+                                log('Referenced conversation contains no messages', 'warn');
                                 return null;
                             }
 
@@ -1287,21 +1287,21 @@ async function getConversationFromDB(id: string): Promise<ConversationData | nul
                         }
                     }
                 } catch (parseErr) {
-                    log(`解析工作区引用失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
+                    log(`Failed to parse workspace reference: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
                     return null;
                 }
             }
 
-            log(`未找到对话 ${id}`, 'warn');
+            log(`Conversation ${id} not found`, 'warn');
             return null;
         });
 
         return result;
     } catch (err) {
-        log(`从数据库获取对话失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to get conversation from database: ${err instanceof Error ? err.message : String(err)}`, 'error');
         return null;
     } finally {
-        // 确保释放数据库连接
+        // Ensure database connections are released
         try {
             if (globalDb) {
                 releaseConnection('global', globalDb);
@@ -1310,17 +1310,17 @@ async function getConversationFromDB(id: string): Promise<ConversationData | nul
                 releaseConnection('workspace', workspaceDb);
             }
         } catch (releaseErr) {
-            log(`释放数据库连接失败: ${releaseErr instanceof Error ? releaseErr.message : String(releaseErr)}`, 'warn');
+            log(`Failed to release database connections: ${releaseErr instanceof Error ? releaseErr.message : String(releaseErr)}`, 'warn');
         }
     }
 }
 
-// 获取对话
+// Get conversation
 async function getConversation(id?: string): Promise<ConversationData | null> {
     let db: SQLiteDatabase | null = null;
     
     try {
-        // 如果没有提供ID，尝试从数据库获取当前活动对话
+        // If no ID provided, try to get current active conversation from database
         if (!id) {
             db = await openDatabase('global');
             try {
@@ -1336,35 +1336,35 @@ async function getConversation(id?: string): Promise<ConversationData | null> {
             }
         }
 
-        // 如果提供了ID，直接从数据库获取
+        // If ID provided, directly get from database
         return getConversationFromDB(id);
     } catch (err) {
-        log(`获取对话失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to get conversation: ${err instanceof Error ? err.message : String(err)}`, 'error');
         return null;
     } finally {
-        // 确保释放数据库连接
+        // Ensure database connection is released
         if (db) {
             try {
                 releaseConnection('global', db);
             } catch (releaseErr) {
-                log(`释放数据库连接失败: ${releaseErr instanceof Error ? releaseErr.message : String(releaseErr)}`, 'warn');
+                log(`Failed to release database connection: ${releaseErr instanceof Error ? releaseErr.message : String(releaseErr)}`, 'warn');
             }
         }
     }
 }
 
-// 保存导出文件
+// Save export file
 async function saveExportFile(content: string, filePath: string): Promise<void> {
     try {
         await fs.promises.writeFile(filePath, content, 'utf8');
-        log(`成功保存文件到: ${filePath}`, 'info');
+        log(`Successfully saved file to: ${filePath}`, 'info');
     } catch (err) {
-        log(`保存文件失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to save file: ${err instanceof Error ? err.message : String(err)}`, 'error');
         throw err;
     }
 }
 
-// 获取所有可能的工作区路径
+// Get all possible workspace paths
 function getWorkspacePaths(): string[] {
     const cursorPath = getCursorConfigPath();
     const userPath = path.join(cursorPath, 'User');
@@ -1372,15 +1372,15 @@ function getWorkspacePaths(): string[] {
     const globalStoragePath = path.join(userPath, 'globalStorage');
     
     if (!fs.existsSync(workspaceStoragePath)) {
-        throw new Error(`Cursor 工作区目录不存在: ${workspaceStoragePath}`);
+        throw new Error(`Cursor workspace directory does not exist: ${workspaceStoragePath}`);
     }
 
-    // 获取所有工作区目录
+    // Get all workspace directories
     const workspaces = fs.readdirSync(workspaceStoragePath)
         .map(name => path.join(workspaceStoragePath, name))
         .filter(dir => fs.statSync(dir).isDirectory());
 
-    // 添加全局存储目录
+    // Add global storage directory
     if (fs.existsSync(globalStoragePath)) {
         workspaces.push(globalStoragePath);
     }
@@ -1388,11 +1388,11 @@ function getWorkspacePaths(): string[] {
     return workspaces;
 }
 
-// 查找当前活动的对话
+// Find current active conversation
 async function findCurrentConversation(db: SQLiteDatabase): Promise<string | null> {
     try {
         return await withTransaction(db, async (db) => {
-            // 1. 首先检查编辑器状态
+            // 1. First check editor state
             const editorState = await db.get(
                 'SELECT value FROM ItemTable WHERE key = ? LIMIT 1',
                 ['workbench.editor.activeEditor']
@@ -1402,15 +1402,15 @@ async function findCurrentConversation(db: SQLiteDatabase): Promise<string | nul
                 try {
                     const data = JSON.parse(editorState.value);
                     if (data.composerId) {
-                        log('从编辑器状态找到当前对话', 'info');
+                        log('Found current conversation from editor state', 'info');
                         return data.composerId;
                     }
                 } catch (parseErr) {
-                    log(`解析编辑器状态失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
+                    log(`Failed to parse editor state: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
                 }
             }
 
-            // 2. 检查composer数据
+            // 2. Check composer data
             const composerData = await db.get(
                 'SELECT value FROM ItemTable WHERE key = ? LIMIT 1',
                 ['composer.composerData']
@@ -1420,15 +1420,15 @@ async function findCurrentConversation(db: SQLiteDatabase): Promise<string | nul
                 try {
                     const data = JSON.parse(composerData.value);
                     if (data.currentConversationId) {
-                        log('从composer数据找到当前对话', 'info');
+                        log('Found current conversation from composer data', 'info');
                         return data.currentConversationId;
                     }
                 } catch (parseErr) {
-                    log(`解析composer数据失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
+                    log(`Failed to parse composer data: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
                 }
             }
 
-            // 3. 检查最近的对话
+            // 3. Check recent conversations
             const recentConversation = await db.get(
                 'SELECT key FROM cursorDiskKV WHERE key LIKE ? ORDER BY json_extract(value, "$.lastUpdatedAt") DESC LIMIT 1',
                 ['composerData:%']
@@ -1438,24 +1438,24 @@ async function findCurrentConversation(db: SQLiteDatabase): Promise<string | nul
                 try {
                     const parts = recentConversation.key.split(':');
                     if (parts.length === 2) {
-                        log('从最近对话找到当前对话', 'info');
+                        log('Found current conversation from recent conversations', 'info');
                         return parts[1];
                     }
                 } catch (parseErr) {
-                    log(`解析最近对话失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
+                    log(`Failed to parse recent conversation: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
                 }
             }
 
-            log('未找到当前活动对话', 'warn');
+            log('No active conversation found', 'warn');
             return null;
         });
     } catch (err) {
-        log(`查询当前对话失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to query current conversation: ${err instanceof Error ? err.message : String(err)}`, 'error');
         throw err;
     }
 }
 
-// 查找所有VSCDB文件
+// Find all VSCDB files
 async function findVSCDBFiles(): Promise<string[]> {
     const cursorPath = getCursorConfigPath();
     const userPath = path.join(cursorPath, 'User');
@@ -1464,7 +1464,7 @@ async function findVSCDBFiles(): Promise<string[]> {
     const dbFiles: string[] = [];
 
     try {
-        // 1. 检查工作区数据库
+        // 1. Check workspace databases
         if (fs.existsSync(workspaceStoragePath)) {
             const workspaces = fs.readdirSync(workspaceStoragePath)
                 .map(name => path.join(workspaceStoragePath, name))
@@ -1473,244 +1473,184 @@ async function findVSCDBFiles(): Promise<string[]> {
             for (const workspace of workspaces) {
                 const stateDb = path.join(workspace, 'state.vscdb');
                 if (fs.existsSync(stateDb)) {
-                    log('找到工作区数据库', 'info');
+                    log('Found workspace database', 'info');
                     dbFiles.push(stateDb);
                 }
             }
         }
 
-        // 2. 检查全局数据库
+        // 2. Check global database
         const globalStateDb = path.join(userPath, 'state-global.vscdb');
         if (fs.existsSync(globalStateDb)) {
-            log('找到全局状态数据库', 'info');
+            log('Found global state database', 'info');
             dbFiles.push(globalStateDb);
         }
 
-        // 3. 检查全局存储目录中的数据库
+        // 3. Check global storage directories for databases
         if (fs.existsSync(globalStoragePath)) {
-            log('扫描全局存储目录', 'info');
+            log('Scanning global storage directory', 'info');
             const globalDirs = fs.readdirSync(globalStoragePath);
             for (const dir of globalDirs) {
                 const globalDbPath = path.join(globalStoragePath, dir, 'state.vscdb');
                 if (fs.existsSync(globalDbPath)) {
-                    log('找到全局存储数据库', 'info');
+                    log('Found global storage database', 'info');
                     dbFiles.push(globalDbPath);
                 }
             }
         }
 
-        // 4. 检查用户数据目录下的数据库
+        // 4. Check user data directory for databases
         const userStateDb = path.join(userPath, 'state.vscdb');
         if (fs.existsSync(userStateDb)) {
-            log('找到用户状态数据库', 'info');
+            log('Found user state database', 'info');
             dbFiles.push(userStateDb);
         }
 
-        // 5. 检查 Cursor 特定的数据库
+        // 5. Check Cursor-specific databases
         const cursorStateDb = path.join(cursorPath, 'state.vscdb');
         if (fs.existsSync(cursorStateDb)) {
-            log('找到 Cursor 状态数据库', 'info');
+            log('Found Cursor state database', 'info');
             dbFiles.push(cursorStateDb);
         }
 
         return dbFiles;
     } catch (err) {
-        log(`查找数据库文件失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to find database files: ${err instanceof Error ? err.message : String(err)}`, 'error');
         throw err;
     }
 }
 
-// 检查工作区是否包含数据库文件
+// Check if workspace contains database file
 function hasDatabase(workspacePath: string): boolean {
     try {
         const dbPath = path.join(workspacePath, 'state.vscdb');
         return fs.existsSync(dbPath);
     } catch (err) {
-        log(`检查数据库存在失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to check database existence: ${err instanceof Error ? err.message : String(err)}`, 'error');
         return false;
     }
 }
 
-// 获取工作区的最后修改时间
+// Get last modified time of workspace
 function getLastModified(workspacePath: string): number {
     try {
         const dbPath = path.join(workspacePath, 'state.vscdb');
         return fs.statSync(dbPath).mtimeMs;
     } catch (err) {
-        log(`获取最后修改时间失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        log(`Failed to get last modified time: ${err instanceof Error ? err.message : String(err)}`, 'error');
         return 0;
     }
 }
 
-// 查找活动对话
-async function findActiveConversations(db: SQLiteDatabase): Promise<ConversationLocation[]> {
-    const locations: ConversationLocation[] = [];
-    
-    try {
-        await withTransaction(db, async (db) => {
-            // 1. 检查编辑器状态
-            const editorRows = await db.all(
-                'SELECT value FROM ItemTable WHERE key IN (?, ?)',
-                [
-                    'workbench.editor.languageDetectionOpenedLanguages.global',
-                    'memento/workbench.editors.files.textFileEditor'
-                ]
-            ) as DatabaseRow[];
+// Get all possible workspace paths
+function getWorkspacePaths(): string[] {
+    const cursorPath = getCursorConfigPath();
+    const userPath = path.join(cursorPath, 'User');
+    const workspaceStoragePath = path.join(userPath, 'workspaceStorage');
+    const globalStoragePath = path.join(userPath, 'globalStorage');
 
-            if (editorRows) {
-                for (const row of editorRows) {
-                    try {
-                        const data = JSON.parse(row.value) as EditorState;
-                        // 解析编辑器状态中的对话ID
-                        if (data.conversations || data.recentConversations) {
-                            const convs = data.conversations || data.recentConversations || [];
-                            for (const conv of convs) {
-                                if (conv.id) {
-                                    locations.push({
-                                        workspaceId: '',
-                                        conversationId: conv.id,
-                                        timestamp: conv.timestamp || Date.now(),
-                                        source: 'editor'
-                                    });
-                                }
-                            }
-                        }
-                    } catch (parseErr) {
-                        log(`解析编辑器状态失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
-                        // 继续处理下一行
-                    }
-                }
-            }
-
-            // 2. 检查工作区状态
-            const workspaceRows = await db.all(
-                'SELECT value FROM ItemTable WHERE key LIKE ? OR key LIKE ?',
-                ['workbench.panel.composer%', 'chat.workspace%']
-            ) as DatabaseRow[];
-
-            if (workspaceRows) {
-                for (const row of workspaceRows) {
-                    try {
-                        const data = JSON.parse(row.value) as WorkspaceState;
-                        const convId = data.activeConversation || data.currentConversation;
-                        if (convId) {
-                            locations.push({
-                                workspaceId: data.workspaceId || '',
-                                conversationId: convId,
-                                timestamp: Date.now(),
-                                source: 'workspace'
-                            });
-                        }
-                    } catch (parseErr) {
-                        log(`解析工作区状态失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
-                        // 继续处理下一行
-                    }
-                }
-            }
-
-            // 3. 检查最近的对话
-            const recentRows = await db.all(
-                'SELECT key, value FROM cursorDiskKV WHERE key LIKE ? ORDER BY json_extract(value, "$.lastUpdatedAt") DESC LIMIT 5',
-                ['composerData:%']
-            ) as DatabaseRow[];
-
-            if (recentRows) {
-                for (const row of recentRows) {
-                    try {
-                        const parts = row.key.split(':');
-                        if (parts.length !== 2) {
-                            log(`无效的对话ID格式: ${row.key}`, 'warn');
-                            continue;
-                        }
-                        const convId = parts[1];
-                        const data = JSON.parse(row.value) as { lastUpdatedAt?: number; workspaceId?: string };
-                        locations.push({
-                            workspaceId: data.workspaceId || '',
-                            conversationId: convId,
-                            timestamp: data.lastUpdatedAt || Date.now(),
-                            source: 'recent'
-                        });
-                    } catch (parseErr) {
-                        log(`解析最近对话失败: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'warn');
-                        // 继续处理下一行
-                    }
-                }
-            }
-        });
-
-        // 按时间戳排序并去重
-        return Array.from(
-            new Map(
-                locations
-                    .sort((a, b) => b.timestamp - a.timestamp)
-                    .map(loc => [loc.conversationId, loc])
-            ).values()
-        );
-    } catch (err) {
-        log(`查找活动对话失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
-        return [];
+    if (!fs.existsSync(workspaceStoragePath)) {
+        throw new Error(`Cursor workspace directory does not exist: ${workspaceStoragePath}`);
     }
+
+    // Get all workspace directories
+    const workspaces = fs.readdirSync(workspaceStoragePath)
+        .map(name => path.join(workspaceStoragePath, name))
+        .filter(dir => fs.statSync(dir).isDirectory());
+
+    // Add global storage directory
+    if (fs.existsSync(globalStoragePath)) {
+        workspaces.push(globalStoragePath);
+    }
+
+    return workspaces;
 }
 
-// 导出函数
-export {
-    getConversationFromDB,
-    getConversation,
-    saveExportFile,
-    openDatabase,
-    closeDatabase,
-    parseMessageContent,
-    calculateStatistics,
-    detectIntent,
-    detectTags,
-    getWorkspacePaths,
-    findCurrentConversation,
-    findVSCDBFiles,
-    hasDatabase,
-    getLastModified,
-    findActiveConversations,
-    deduplicateConversations,
-    getReadableWorkspaceName,
-    formatDate
-}; 
-
-export async function getAllConversations(): Promise<ConversationData[]> {
+// Get conversation from database
+async function getConversationFromDB(id: string): Promise<ConversationData | null> {
     let globalDb: SQLiteDatabase | null = null;
-    
+    let workspaceDb: SQLiteDatabase | null = null;
+
     try {
-        // 打开全局数据库
+        // 1. First try to get complete conversation data from global storage
         globalDb = await openDatabase('global');
-        
-        // 查询所有对话数据
-        const rows = await globalDb.all(
-            'SELECT key, value FROM cursorDiskKV WHERE key LIKE ?',
-            ['composerData:%']
-        ) as DatabaseRow[];
+        const result = await withTransaction(globalDb, async (db) => {
+            const conversationData = await db.get(
+                'SELECT value FROM cursorDiskKV WHERE key = ?',
+                [`composerData:${id}`]
+            ) as { value: string } | undefined;
 
-        // 解析每条对话数据
-        const conversations: ConversationData[] = [];
-        for (const row of rows) {
-            try {
-                const data = JSON.parse(row.value);
-                const messages = parseMessages(data);
-                
-                if (messages.length > 0) {
-                    const id = row.key.split(':')[1];
-                    conversations.push(createConversationData(id, data, messages));
+            if (conversationData) {
+                try {
+                    const data = JSON.parse(conversationData.value);
+                    const messages = parseMessages(data);
+
+                    if (messages.length === 0) {
+                        log('Conversation contains no messages', 'warn');
+                        return null;
+                    }
+
+                    return createConversationData(id, data, messages);
+                } catch (parseErr) {
+                    log(`Failed to parse conversation data: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
+                    return null;
                 }
-            } catch (err) {
-                log(`解析对话数据失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
-                // 继续处理下一条记录
             }
-        }
 
-        return conversations;
+            // 2. If not found, check if workspace has conversation reference
+            workspaceDb = await openDatabase('workspace');
+            const workspaceRef = await workspaceDb.get(
+                'SELECT value FROM ItemTable WHERE key = ?',
+                [`workbench.panel.chat.${id}`]
+            ) as { value: string } | undefined;
+
+            if (workspaceRef) {
+                try {
+                    const refData = JSON.parse(workspaceRef.value);
+                    // If reference found, try global storage again
+                    if (refData.composerId) {
+                        const refConversation = await db.get(
+                            'SELECT value FROM cursorDiskKV WHERE key = ?',
+                            [`composerData:${refData.composerId}`]
+                        ) as { value: string } | undefined;
+
+                        if (refConversation) {
+                            const data = JSON.parse(refConversation.value);
+                            const messages = parseMessages(data);
+
+                            if (messages.length === 0) {
+                                log('Referenced conversation contains no messages', 'warn');
+                                return null;
+                            }
+
+                            return createConversationData(refData.composerId, data, messages);
+                        }
+                    }
+                } catch (parseErr) {
+                    log(`Failed to parse workspace reference: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`, 'error');
+                    return null;
+                }
+            }
+
+            log(`Conversation ${id} not found`, 'warn');
+            return null;
+        });
+
+        return result;
     } catch (err) {
-        log(`获取所有对话失败: ${err instanceof Error ? err.message : String(err)}`, 'error');
-        throw err;
+        log(`Failed to get conversation from database: ${err instanceof Error ? err.message : String(err)}`, 'error');
+        return null;
     } finally {
-        if (globalDb) {
-            releaseConnection('global', globalDb);
+        // Ensure database connections are released
+        try {
+            if (globalDb) {
+                releaseConnection('global', globalDb);
+            }
+            if (workspaceDb) {
+                releaseConnection('workspace', workspaceDb);
+            }
+        } catch (releaseErr) {
+            log(`Failed to release database connections: ${releaseErr instanceof Error ? releaseErr.message : String(releaseErr)}`, 'warn');
         }
     }
-} 
+}

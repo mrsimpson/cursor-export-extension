@@ -1,6 +1,6 @@
 module.exports = {
     // UI Elements
-    exportButtonText: "$(export) Alle Gespräche exportieren",
+    exportButtonText: "$(export) Composer-Export",
     exportButtonTooltip: "Alle Workspace-Gespräche exportieren",
     exportPanelTitle: "Gesprächsexport-Einstellungen",
     exportPanelHeading: "Alle Workspace-Gespräche werden exportiert",
