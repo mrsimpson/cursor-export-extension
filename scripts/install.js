@@ -3,9 +3,12 @@ const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
 
-// 检查Cursor是否已安装
+// Import translations
+const { t } = require('./i18n');
+
+// Check if Cursor is installed
 function checkCursorInstallation() {
-    console.log('检查Cursor安装...');
+    console.log(t('checkingCursor'));
     const platform = process.platform;
     let cursorPath;
 
@@ -20,35 +23,35 @@ function checkCursorInstallation() {
             cursorPath = '/usr/share/cursor/cursor';
             break;
         default:
-            throw new Error(`不支持的操作系统: ${platform}`);
+            throw new Error(t('unsupportedOS').replace('{0}', platform));
     }
 
     if (!fs.existsSync(cursorPath)) {
-        throw new Error('未检测到Cursor安装。请先安装Cursor IDE。');
+        throw new Error(t('cursorNotFound'));
     }
-    console.log('✓ 已检测到Cursor安装');
+    console.log(t('cursorDetected'));
 }
 
-// 检查依赖
+// Check dependencies
 function checkDependencies() {
-    console.log('检查依赖...');
+    console.log(t('checkingDeps'));
     try {
         const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
         const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
         
-        console.log('验证node_modules...');
+        console.log(t('verifyingModules'));
         if (!fs.existsSync('node_modules')) {
-            console.log('未找到node_modules，正在安装依赖...');
+            console.log(t('modulesNotFound'));
             execSync('npm install', { stdio: 'inherit' });
         }
         
-        console.log('✓ 依赖检查完成');
+        console.log(t('depsCheckComplete'));
     } catch (error) {
-        throw new Error(`依赖检查失败: ${error.message}`);
+        throw new Error(t('depsCheckFailed').replace('{0}', error.message));
     }
 }
 
-// 获取Cursor扩展目录
+// Get Cursor extensions path
 function getCursorExtensionsPath() {
     const homedir = os.homedir();
     let extensionsPath;
@@ -64,32 +67,32 @@ function getCursorExtensionsPath() {
             extensionsPath = path.join('/usr', 'share', 'cursor', 'resources', 'app', 'extensions');
             break;
         default:
-            throw new Error('不支持的操作系统');
+            throw new Error(t('unsupportedOS').replace('{0}', process.platform));
     }
 
     if (!fs.existsSync(extensionsPath)) {
         try {
             fs.mkdirSync(extensionsPath, { recursive: true });
         } catch (error) {
-            throw new Error(`创建扩展目录失败: ${error.message}`);
+            throw new Error(t('depsCheckFailed').replace('{0}', error.message));
         }
     }
 
     return extensionsPath;
 }
 
-// 创建备份
+// Create backup
 function createBackup(targetDir) {
     if (fs.existsSync(targetDir)) {
         const backupDir = `${targetDir}_backup_${new Date().toISOString().replace(/[:.]/g, '-')}`;
-        console.log(`创建备份: ${backupDir}`);
+        console.log(t('creatingBackup').replace('{0}', backupDir));
         fs.cpSync(targetDir, backupDir, { recursive: true });
         return backupDir;
     }
     return null;
 }
 
-// 复制目录
+// Copy directory
 function copyDir(sourceDir, targetDir) {
     if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });
@@ -108,10 +111,10 @@ function copyDir(sourceDir, targetDir) {
     }
 }
 
-// 复制扩展文件
+// Copy extension files
 function copyExtensionFiles(sourceDir, targetDir) {
     if (!fs.existsSync(sourceDir)) {
-        throw new Error(`源目录不存在: ${sourceDir}`);
+        throw new Error(t('copyFailed').replace('{0}', sourceDir).replace('{1}', 'Source directory does not exist'));
     }
 
     createExtensionDir(targetDir);
@@ -128,96 +131,96 @@ function copyExtensionFiles(sourceDir, targetDir) {
         const targetPath = path.join(targetDir, item);
         
         if (!fs.existsSync(sourcePath)) {
-            console.warn(`警告: 文件或目录不存在: ${sourcePath}`);
+            console.warn(`Warning: ${item} does not exist at ${sourcePath}`);
             continue;
         }
 
         try {
             if (fs.statSync(sourcePath).isDirectory()) {
-                console.log(`复制目录: ${item}`);
+                console.log(t('copyingDir').replace('{0}', item));
                 copyDir(sourcePath, targetPath);
             } else {
-                console.log(`复制文件: ${item}`);
+                console.log(t('copyingFile').replace('{0}', item));
                 fs.copyFileSync(sourcePath, targetPath);
             }
             copiedFiles++;
-            console.log(`✓ ${item} 复制成功`);
+            console.log(t('copySuccess').replace('{0}', item));
         } catch (error) {
-            throw new Error(`复制 ${item} 失败: ${error.message}`);
+            throw new Error(t('copyFailed').replace('{0}', item).replace('{1}', error.message));
         }
     }
 
     if (copiedFiles === 0) {
-        throw new Error('没有复制任何文件');
+        throw new Error(t('nothingCopied'));
     }
 
-    // 验证安装
-    console.log('\n验证安装...');
+    // Verify installation
+    console.log('\n' + t('verifyingInstall'));
     for (const item of necessaryFiles) {
         const targetPath = path.join(targetDir, item);
         if (!fs.existsSync(targetPath)) {
-            throw new Error(`验证失败: ${item} 未正确安装`);
+            throw new Error(t('verifyFailed').replace('{0}', item));
         }
-        console.log(`✓ ${item} 已正确安装`);
+        console.log(t('verifySuccess').replace('{0}', item));
     }
 }
 
-// 创建扩展目录
+// Create extension directory
 function createExtensionDir(extensionPath) {
     if (!fs.existsSync(extensionPath)) {
         fs.mkdirSync(extensionPath, { recursive: true });
     }
 }
 
-// 主安装函数
+// Main installation function
 async function installExtension() {
     try {
-        console.log('=== 开始安装扩展 ===\n');
+        console.log(t('installStart') + '\n');
 
-        // 检查Cursor安装
+        // Check Cursor installation
         checkCursorInstallation();
 
-        // 检查依赖
+        // Check dependencies
         checkDependencies();
 
-        // 获取扩展目录
+        // Get extension directory
         const extensionsPath = getCursorExtensionsPath();
-        console.log(`Cursor扩展目录: ${extensionsPath}`);
+        console.log('Cursor extensions directory:', extensionsPath);
 
-        // 获取package.json
+        // Get package.json
         const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
         const extensionId = `${packageJson.publisher}.${packageJson.name}-${packageJson.version}`;
         const targetDir = path.join(extensionsPath, extensionId);
-        console.log(`目标安装目录: ${targetDir}`);
+        console.log('Target installation directory:', targetDir);
 
-        // 创建备份
+        // Create backup
         let backupDir = null;
         if (fs.existsSync(targetDir)) {
             backupDir = createBackup(targetDir);
-            console.log('删除已存在的安装...');
+            console.log('Removing existing installation...');
             fs.rmSync(targetDir, { recursive: true, force: true });
         }
 
-        // 编译TypeScript
-        console.log('\n编译TypeScript...');
+        // Compile TypeScript
+        console.log('\nCompiling TypeScript...');
         execSync('npm run compile', { stdio: 'inherit' });
 
-        // 复制文件
-        console.log('\n复制扩展文件...');
+        // Copy files
+        console.log('\nCopying extension files...');
         const sourceDir = path.join(__dirname, '..');
         copyExtensionFiles(sourceDir, targetDir);
 
-        console.log('\n=== 安装完成！===');
-        console.log(`扩展已安装到: ${targetDir}`);
+        console.log('\n' + t('installComplete'));
+        console.log(t('extensionInstalled').replace('{0}', targetDir));
         if (backupDir) {
-            console.log(`备份已创建: ${backupDir}`);
+            console.log(t('backupCreated').replace('{0}', backupDir));
         }
-        console.log('\n请重启Cursor IDE以启用扩展。');
+        console.log('\n' + t('restartRequired'));
     } catch (error) {
-        console.error('\n安装失败:', error.message);
+        console.error('\n' + t('installFailed').replace('{0}', error.message));
         process.exit(1);
     }
 }
 
-// 运行安装
+// Run installation
 installExtension(); 

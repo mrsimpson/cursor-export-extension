@@ -372,10 +372,10 @@ function parseCodeBlocks(text) {
     const contents = [];
     let processedRanges = [];
     // 处理 assistant_snippet 格式
-    const snippetRegex = /```assistant_snippet_[A-Za-z0-9+/]+\.txt\n([\s\S]*?)```/g;
-    let match;
-    while ((match = snippetRegex.exec(text)) !== null) {
-        const content = match[1].trim();
+    const snippetRegex = /```assistant_snippet_[A-Za-z0-9+/]+\.txt\s*([\s\S]*?)```/g;
+    let snippetMatch;
+    while ((snippetMatch = snippetRegex.exec(text)) !== null) {
+        const content = snippetMatch[1].trim();
         if (content) {
             contents.push({
                 type: 'code',
@@ -384,28 +384,28 @@ function parseCodeBlocks(text) {
                 metadata: {
                     backtickCount: 3,
                     originalRange: {
-                        start: match.index,
-                        end: match.index + match[0].length
+                        start: snippetMatch.index,
+                        end: snippetMatch.index + snippetMatch[0].length
                     }
                 }
             });
             processedRanges.push({
-                start: match.index,
-                end: match.index + match[0].length
+                start: snippetMatch.index,
+                end: snippetMatch.index + snippetMatch[0].length
             });
         }
     }
     // 处理其他代码块
     const codeBlockRegex = /(`+)(\w*)\n([\s\S]*?)\1/g;
-    while ((match = codeBlockRegex.exec(text)) !== null) {
+    while ((snippetMatch = codeBlockRegex.exec(text)) !== null) {
         // 检查这个范围是否已经被处理过
-        const isProcessed = match && processedRanges.some(range => match.index >= range.start && match.index < range.end);
-        if (!isProcessed && match &&
-            !text.substring(match.index).startsWith('```thinking') &&
-            !text.substring(match.index).startsWith('```assistant_snippet')) {
-            const backticks = match[1];
-            const lang = match[2] || '';
-            const code = match[3].trim();
+        const isProcessed = snippetMatch && processedRanges.some(range => snippetMatch.index >= range.start && snippetMatch.index < range.end);
+        if (!isProcessed && snippetMatch &&
+            !text.substring(snippetMatch.index).startsWith('```thinking') &&
+            !text.substring(snippetMatch.index).startsWith('```assistant_snippet')) {
+            const backticks = snippetMatch[1];
+            const lang = snippetMatch[2] || '';
+            const code = snippetMatch[3].trim();
             if (code) {
                 contents.push({
                     type: 'code',
@@ -414,14 +414,14 @@ function parseCodeBlocks(text) {
                     metadata: {
                         backtickCount: backticks.length,
                         originalRange: {
-                            start: match.index,
-                            end: match.index + match[0].length
+                            start: snippetMatch.index,
+                            end: snippetMatch.index + snippetMatch[0].length
                         }
                     }
                 });
                 processedRanges.push({
-                    start: match.index,
-                    end: match.index + match[0].length
+                    start: snippetMatch.index,
+                    end: snippetMatch.index + snippetMatch[0].length
                 });
             }
         }
@@ -445,7 +445,7 @@ function parseMessageContent(text) {
             return acc;
         }, []);
         // 提取thinking块
-        const thinkingRegex = /```thinking[\r\n\t\f\v ]*\n([\s\S]*?)[\r\n\t\f\v ]*```/g;
+        const thinkingRegex = /```thinking\s*([\s\S]*?)```/g;
         let thinkingMatch;
         while ((thinkingMatch = thinkingRegex.exec(text)) !== null) {
             const content = thinkingMatch[1].trim();
@@ -645,7 +645,7 @@ function parseMessageContent(text) {
         return contents;
     }
     catch (error) {
-        (0, utils_1.log)(`解析消息内容��败: ${error instanceof Error ? error.message : String(error)}`, 'error');
+        (0, utils_1.log)(`解析消息内容失败: ${error instanceof Error ? error.message : String(error)}`, 'error');
     }
     return contents;
 }

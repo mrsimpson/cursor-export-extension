@@ -49,9 +49,8 @@ function convertToMarkdown(conversation) {
         if (!message.content || message.content.trim() === '') {
             return;
         }
-        const timestamp = message.timestamp ? (0, utils_1.formatTimestamp)(message.timestamp) : '';
         const role = message.role === 'user' ? '👤 用户' : '🤖 助手';
-        markdown += `### ${role} (${timestamp})\n\n`;
+        markdown += `### ${role}\n\n`;
         // 处理消息内容
         const contents = (0, storage_1.parseMessageContent)(message.content);
         let hasContent = false; // 用于跟踪是否有实际内容

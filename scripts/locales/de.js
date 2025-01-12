@@ -1,0 +1,47 @@
+module.exports = {
+    // UI Elements
+    exportButtonText: "$(export) Alle Gespräche exportieren",
+    exportButtonTooltip: "Alle Workspace-Gespräche exportieren",
+    exportPanelTitle: "Gesprächsexport-Einstellungen",
+    exportPanelHeading: "Alle Workspace-Gespräche werden exportiert",
+    exportPanelSubheading: "Bitte wählen Sie einen Speicherort",
+    selectLocationButton: "Exportverzeichnis auswählen",
+    cancelButton: "Abbrechen",
+    openFolderButton: "Ordner öffnen",
+
+    // Messages
+    selectOutputPath: "Ausgabepfad auswählen",
+    selectSaveLocation: "Speicherort auswählen",
+    exportStarted: "Export wird gestartet...",
+    noConversation: "Keine Gespräche zum Exportieren gefunden",
+    exportSuccess: "Export erfolgreich abgeschlossen. Dateien gespeichert unter:",
+    exportFailed: "Export fehlgeschlagen: ",
+    exportingProgress: "Exportiere Gespräch {0} von {1}",
+    unnamedConversation: "Unbenanntes Gespräch",
+
+    // Installation
+    checkingCursor: "Überprüfe Cursor-Installation...",
+    cursorDetected: "✓ Cursor-Installation gefunden",
+    unsupportedOS: "Nicht unterstütztes Betriebssystem: {0}",
+    cursorNotFound: "Cursor-Installation nicht gefunden. Bitte installieren Sie zuerst Cursor IDE.",
+    checkingDeps: "Überprüfe Abhängigkeiten...",
+    verifyingModules: "Überprüfe node_modules...",
+    modulesNotFound: "node_modules nicht gefunden, installiere Abhängigkeiten...",
+    depsCheckComplete: "✓ Abhängigkeitsprüfung abgeschlossen",
+    depsCheckFailed: "Abhängigkeitsprüfung fehlgeschlagen: {0}",
+    creatingBackup: "Erstelle Backup: {0}",
+    copyingDir: "Kopiere Verzeichnis: {0}",
+    copyingFile: "Kopiere Datei: {0}",
+    copySuccess: "✓ {0} erfolgreich kopiert",
+    copyFailed: "Kopieren von {0} fehlgeschlagen: {1}",
+    nothingCopied: "Keine Dateien wurden kopiert",
+    verifyingInstall: "Überprüfe Installation...",
+    verifyFailed: "Überprüfung fehlgeschlagen: {0} nicht korrekt installiert",
+    verifySuccess: "✓ {0} korrekt installiert",
+    installStart: "=== Starte Extension-Installation ===",
+    installComplete: "=== Installation abgeschlossen! ===",
+    extensionInstalled: "Extension installiert unter: {0}",
+    backupCreated: "Backup erstellt: {0}",
+    restartRequired: "Bitte starten Sie Cursor IDE neu, um die Extension zu aktivieren.",
+    installFailed: "Installation fehlgeschlagen: {0}"
+}; 

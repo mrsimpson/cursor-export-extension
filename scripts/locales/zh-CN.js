@@ -1,0 +1,47 @@
+module.exports = {
+    // UI Elements
+    exportButtonText: "$(export) 导出所有对话",
+    exportButtonTooltip: "导出所有工作区的对话记录",
+    exportPanelTitle: "导出对话设置",
+    exportPanelHeading: "即将导出所有工作区的对话记录",
+    exportPanelSubheading: "请选择保存位置",
+    selectLocationButton: "选择导出位置",
+    cancelButton: "取消",
+    openFolderButton: "打开文件夹",
+
+    // Messages
+    selectOutputPath: "选择输出路径",
+    selectSaveLocation: "选择保存位置",
+    exportStarted: "开始导出...",
+    noConversation: "没有找到可导出的对话",
+    exportSuccess: "导出成功完成。文件保存在：",
+    exportFailed: "导出失败：",
+    exportingProgress: "正在导出对话 {0}/{1}",
+    unnamedConversation: "未命名对话",
+
+    // Installation
+    checkingCursor: "检查Cursor安装...",
+    cursorDetected: "✓ 已检测到Cursor安装",
+    unsupportedOS: "不支持的操作系统：{0}",
+    cursorNotFound: "未检测到Cursor安装。请先安装Cursor IDE。",
+    checkingDeps: "检查依赖...",
+    verifyingModules: "验证node_modules...",
+    modulesNotFound: "未找到node_modules，正在安装依赖...",
+    depsCheckComplete: "✓ 依赖检查完成",
+    depsCheckFailed: "依赖检查失败：{0}",
+    creatingBackup: "创建备份：{0}",
+    copyingDir: "复制目录：{0}",
+    copyingFile: "复制文件：{0}",
+    copySuccess: "✓ {0} 复制成功",
+    copyFailed: "复制 {0} 失败：{1}",
+    nothingCopied: "没有复制任何文件",
+    verifyingInstall: "验证安装...",
+    verifyFailed: "验证失败：{0} 未正确安装",
+    verifySuccess: "✓ {0} 已正确安装",
+    installStart: "=== 开始安装扩展 ===",
+    installComplete: "=== 安装完成！===",
+    extensionInstalled: "扩展已安装到：{0}",
+    backupCreated: "备份已创建：{0}",
+    restartRequired: "请重启Cursor IDE以启用扩展。",
+    installFailed: "安装失败：{0}"
+}; 

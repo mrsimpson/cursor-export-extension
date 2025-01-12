@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+out/
+dist/
+*.vsix
+
+# Test outputs
+test-output/
+coverage/
+
+# IDE and editor files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# SQLite databases
+*.vscdb
+*.vscdb-shm
+*.vscdb-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Temporary files
+*.tmp
+*.temp
+.history/
+
+# Generated source maps
+*.js.map
+*.css.map
+
+# Export directory
+cursor-export/

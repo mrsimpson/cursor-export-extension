@@ -1,23 +1,24 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ExportOptions } from './types';
-import { messages, showStatus, getDefaultOutputPath, log } from './utils';
+import { showStatus, getDefaultOutputPath, log } from './utils';
 import { getConversation, saveExportFile, getAllConversations } from './storage';
 import { convertToMarkdown } from './markdown';
+import { t } from './i18n';
 
-// 显示导出配置面板
+// Show export configuration panel
 async function showExportPanel(extensionContext: vscode.ExtensionContext): Promise<void> {
-    // 创建webview面板
+    // Create webview panel
     const panel = vscode.window.createWebviewPanel(
         'cursorExport',
-        '导出对话设置',
+        t('exportPanelTitle'),
         vscode.ViewColumn.One,
         {
             enableScripts: true
         }
     );
 
-    // 设置HTML内容
+    // Set HTML content
     panel.webview.html = `
         <!DOCTYPE html>
         <html>
@@ -48,12 +49,12 @@ async function showExportPanel(extensionContext: vscode.ExtensionContext): Promi
         </head>
         <body>
             <div class="form-group">
-                <h3>即将导出所有工作区的对话记录</h3>
-                <p>请选择保存位置</p>
+                <h3>${t('exportPanelHeading')}</h3>
+                <p>${t('exportPanelSubheading')}</p>
             </div>
             <div class="form-group">
-                <button id="exportButton">选择导出位置</button>
-                <button id="cancelButton">取消</button>
+                <button id="exportButton">${t('selectLocationButton')}</button>
+                <button id="cancelButton">${t('cancelButton')}</button>
             </div>
             <script>
                 const vscode = acquireVsCodeApi();
@@ -70,7 +71,7 @@ async function showExportPanel(extensionContext: vscode.ExtensionContext): Promi
         </html>
     `;
 
-    // 处理消息
+    // Handle messages
     panel.webview.onDidReceiveMessage(async message => {
         switch (message.command) {
             case 'selectLocation':
@@ -78,8 +79,8 @@ async function showExportPanel(extensionContext: vscode.ExtensionContext): Promi
                     canSelectFiles: false,
                     canSelectFolders: true,
                     canSelectMany: false,
-                    openLabel: messages.selectOutputPath,
-                    title: messages.selectSaveLocation
+                    openLabel: t('selectOutputPath'),
+                    title: t('selectSaveLocation')
                 });
                 
                 if (folderUri && folderUri[0]) {
@@ -94,18 +95,18 @@ async function showExportPanel(extensionContext: vscode.ExtensionContext): Promi
     });
 }
 
-// 导出所有对话
+// Export all conversations
 async function exportAllConversations(folderUri: vscode.Uri) {
     try {
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: messages.exportStarted,
+            title: t('exportStarted'),
             cancellable: true
         }, async (progress, token) => {
             // Get all conversations
             const conversations = await getAllConversations();
             if (!conversations || conversations.length === 0) {
-                throw new Error(messages.noConversation);
+                throw new Error(t('noConversation'));
             }
 
             // Create a folder for exports
@@ -120,7 +121,7 @@ async function exportAllConversations(folderUri: vscode.Uri) {
                 
                 // Update progress
                 progress.report({ 
-                    message: `Exporting conversation ${i + 1} of ${conversations.length}`,
+                    message: t('exportingProgress').replace('{0}', (i + 1).toString()).replace('{1}', conversations.length.toString()),
                     increment: (100 / conversations.length)
                 });
 
@@ -128,7 +129,7 @@ async function exportAllConversations(folderUri: vscode.Uri) {
                 const markdown = convertToMarkdown(conversation);
                 
                 // Generate filename
-                const fileName = `${conversation.metadata?.name || '未命名对话'}_${conversation.id}.md`
+                const fileName = `${conversation.metadata?.name || t('unnamedConversation')}_${conversation.id}.md`
                     .replace(/[<>:"/\\|?*]/g, '_');
 
                 // Write file
@@ -140,9 +141,9 @@ async function exportAllConversations(folderUri: vscode.Uri) {
             }
 
             // Show success message
-            const openFolder = messages.openFolder;
+            const openFolder = t('openFolderButton');
             const result = await vscode.window.showInformationMessage(
-                `${messages.exportSuccess} ${exportFolderUri.fsPath}`,
+                `${t('exportSuccess')} ${exportFolderUri.fsPath}`,
                 openFolder
             );
 
@@ -152,41 +153,41 @@ async function exportAllConversations(folderUri: vscode.Uri) {
         });
     } catch (error) {
         if (error instanceof Error && error.message !== 'cancelled') {
-            log(`${messages.exportFailed}${error.message}`, 'error');
-            vscode.window.showErrorMessage(`${messages.exportFailed}${error.message}`);
+            log(`${t('exportFailed')}${error.message}`, 'error');
+            vscode.window.showErrorMessage(`${t('exportFailed')}${error.message}`);
         }
     }
 }
 
-// 导出对话
+// Export conversation
 async function exportConversation(context: vscode.ExtensionContext) {
     try {
         await showExportPanel(context);
     } catch (error) {
         if (error instanceof Error && error.message !== 'cancelled') {
-            log(`${messages.exportFailed}${error.message}`, 'error');
-            vscode.window.showErrorMessage(`${messages.exportFailed}${error.message}`);
+            log(`${t('exportFailed')}${error.message}`, 'error');
+            vscode.window.showErrorMessage(`${t('exportFailed')}${error.message}`);
         }
     }
 }
 
-// 激活插件
+// Activate extension
 export function activate(context: vscode.ExtensionContext) {
-    // 注册导出命令
+    // Register export command
     context.subscriptions.push(
         vscode.commands.registerCommand('cursor-export.exportHistory', () => exportConversation(context))
     );
 
-    // 添加状态栏按钮
+    // Add status bar button
     const exportButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    exportButton.text = "$(export) 导出所有对话";
+    exportButton.text = t('exportButtonText');
     exportButton.command = 'cursor-export.exportHistory';
-    exportButton.tooltip = '导出所有工作区的对话记录';
+    exportButton.tooltip = t('exportButtonTooltip');
     exportButton.show();
     context.subscriptions.push(exportButton);
 }
 
-// 停用插件
+// Deactivate extension
 export function deactivate() {
-    // 清理资源
+    // Clean up resources
 }
