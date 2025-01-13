@@ -2,9 +2,14 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { ExportOptions } from './types';
 import { showStatus, getDefaultOutputPath, log } from './utils';
-import { getConversation, saveExportFile, getAllConversations } from './storage';
+import {
+    getConversationFromDB as getConversation,
+    getAllConversations,
+    saveExportFile
+} from './storage';
 import { convertToMarkdown } from './markdown';
 import { t } from './i18n';
+import { ConversationData, DatabaseRow } from './types';
 
 // Show export configuration panel
 async function showExportPanel(extensionContext: vscode.ExtensionContext): Promise<void> {

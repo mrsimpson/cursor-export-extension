@@ -28,9 +28,16 @@ function getLocale() {
     return 'en';
 }
 
-function t(key) {
+function formatString(str, ...args) {
+    return str.replace(/{(\d+)}/g, (match, index) => {
+        return args[index] !== undefined ? args[index] : match;
+    });
+}
+
+function t(key, ...args) {
     const locale = getLocale();
-    return locales[locale][key];
+    const template = locales[locale][key];
+    return formatString(template, ...args);
 }
 
 module.exports = { t }; 

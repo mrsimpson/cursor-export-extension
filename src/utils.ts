@@ -8,6 +8,7 @@ import prettier from 'prettier';
 import { format as sqlFormat } from 'sql-formatter';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { t } from './i18n';
 
 const execAsync = promisify(exec);
 
@@ -116,40 +117,33 @@ export function escapeMarkdown(text: string): string {
     return text.replace(/([#*`\[\]()\\])/g, '\\$1');
 }
 
-// 格式化时间戳
 export function formatTimestamp(timestamp: number): string {
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
-    // 1分钟内
+
     if (diff < 60000) {
-        return '刚刚';
+        return t('justNow');
     }
-    
-    // 1小时内
+
     if (diff < 3600000) {
         const minutes = Math.floor(diff / 60000);
-        return `${minutes}分钟前`;
+        return t('minutesAgo', minutes);
     }
-    
-    // 24小时内
+
     if (diff < 86400000) {
         const hours = Math.floor(diff / 3600000);
-        return `${hours}小时前`;
+        return t('hoursAgo', hours);
     }
-    
-    // 30天内
+
     if (diff < 2592000000) {
         const days = Math.floor(diff / 86400000);
-        return `${days}天前`;
+        return t('daysAgo', days);
     }
-    
-    // 超过30天，显示完整日期时间
+
     return date.toLocaleString();
 }
 
-// 格式化文件大小
 export function formatFileSize(bytes: number): string {
     if (bytes < 1024) {
         return `${bytes} B`;

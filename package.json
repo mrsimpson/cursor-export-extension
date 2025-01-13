@@ -46,7 +46,8 @@
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
         "package": "vsce package --no-dependencies",
-        "install-extension": "node ./scripts/install.js"
+        "install-extension": "node ./scripts/install.js",
+        "reinstall": "npm run compile && npm run install-extension"
     },
     "dependencies": {
         "prettier": "^3.1.1",

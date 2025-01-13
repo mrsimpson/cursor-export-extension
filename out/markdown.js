@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertToMarkdown = convertToMarkdown;
 const utils_1 = require("./utils");
 const storage_1 = require("./storage");
-// 格式化能力状态
+const i18n_1 = require("./i18n");
+// Format capability status
 function formatCapabilityStatus(status) {
     const statusEmoji = {
         completed: '✅',
@@ -12,48 +13,48 @@ function formatCapabilityStatus(status) {
     };
     return `${statusEmoji[status.status]} ${status.type}`;
 }
-// 生成Markdown文本
+// Generate Markdown text
 function convertToMarkdown(conversation) {
     const { metadata, messages } = conversation;
     let markdown = '';
-    // 添加标题和元数据
-    markdown += `# ${metadata?.name || '未命名对话'}\n\n`;
+    // Add title and metadata
+    markdown += `# ${metadata?.name || (0, i18n_1.t)('unnamedConversation')}\n\n`;
     if (metadata) {
-        markdown += '## 对话信息\n\n';
+        markdown += `## ${(0, i18n_1.t)('conversationInfo')}\n\n`;
         markdown += `- ID: \`${conversation.id}\`\n`;
-        markdown += `- 创建时间: ${(0, utils_1.formatTimestamp)(metadata.createdAt)}\n`;
-        markdown += `- 最后更新: ${(0, utils_1.formatTimestamp)(metadata.lastUpdatedAt)}\n`;
-        markdown += `- 模式: ${metadata.mode === 'agent' ? '智能助手' : '普通对话'}\n`;
+        markdown += `- ${(0, i18n_1.t)('createdAt')}: ${(0, utils_1.formatTimestamp)(metadata.createdAt)}\n`;
+        markdown += `- ${(0, i18n_1.t)('lastUpdated')}: ${(0, utils_1.formatTimestamp)(metadata.lastUpdatedAt)}\n`;
+        markdown += `- ${(0, i18n_1.t)('conversationMode')}: ${metadata.mode === 'agent' ? (0, i18n_1.t)('modeAI') : (0, i18n_1.t)('modeNormal')}\n`;
         if (metadata.workspaceId) {
-            markdown += `- 工作区: \`${metadata.workspaceId}\`\n`;
+            markdown += `- ${(0, i18n_1.t)('workspace')}: \`${metadata.workspaceId}\`\n`;
         }
         if (metadata.intent) {
-            markdown += `- 意图: ${metadata.intent.category} (置信度: ${metadata.intent.confidence})\n`;
+            markdown += `- ${(0, i18n_1.t)('intent')}: ${metadata.intent.category} (${(0, i18n_1.t)('confidence')}: ${metadata.intent.confidence})\n`;
             if (metadata.intent.keywords.length > 0) {
-                markdown += `- 关键词: ${metadata.intent.keywords.join(', ')}\n`;
+                markdown += `- ${(0, i18n_1.t)('keywords')}: ${metadata.intent.keywords.join(', ')}\n`;
             }
         }
         if (metadata.tags.length > 0) {
-            markdown += `- 标签: ${metadata.tags.join(', ')}\n`;
+            markdown += `- ${(0, i18n_1.t)('tags')}: ${metadata.tags.join(', ')}\n`;
         }
-        // 添加统计信息
-        markdown += '\n### 统计信息\n\n';
-        markdown += `- 总消息数: ${metadata.statistics.messageCount}\n`;
-        markdown += `- 用户消息: ${metadata.statistics.userMessageCount}\n`;
-        markdown += `- 助手消息: ${metadata.statistics.assistantMessageCount}\n`;
+        // Add statistics
+        markdown += `\n### ${(0, i18n_1.t)('statistics')}\n\n`;
+        markdown += `- ${(0, i18n_1.t)('totalMessages')}: ${metadata.statistics.messageCount}\n`;
+        markdown += `- ${(0, i18n_1.t)('userMessages')}: ${metadata.statistics.userMessageCount}\n`;
+        markdown += `- ${(0, i18n_1.t)('assistantMessages')}: ${metadata.statistics.assistantMessageCount}\n`;
     }
-    // 添加对话内容
-    markdown += '\n## 对话内容\n\n';
+    // Add conversation content
+    markdown += `\n## ${(0, i18n_1.t)('conversationContent')}\n\n`;
     messages.forEach((message, index) => {
-        // 检查消息内容是否为空
+        // Check if message content is empty
         if (!message.content || message.content.trim() === '') {
             return;
         }
-        const role = message.role === 'user' ? '👤 用户' : '🤖 助手';
+        const role = message.role === 'user' ? '👤 User' : '🤖 Assistant';
         markdown += `### ${role}\n\n`;
-        // 处理消息内容
+        // Process message content
         const contents = (0, storage_1.parseMessageContent)(message.content);
-        let hasContent = false; // 用于跟踪是否有实际内容
+        let hasContent = false; // Track if there's actual content
         contents.forEach(content => {
             switch (content.type) {
                 case 'text':
@@ -63,41 +64,41 @@ function convertToMarkdown(conversation) {
                     }
                     break;
                 case 'thinking':
-                    markdown += '<details><summary>🤔 思考过程</summary>\n\n```thinking\n' + content.content + '\n```\n\n</details>\n\n';
+                    markdown += '<details><summary>🤔 Thinking Process</summary>\n\n```thinking\n' + content.content + '\n```\n\n</details>\n\n';
                     break;
                 case 'code':
                     if (content.content.trim()) {
                         const lang = content.language || 'plaintext';
-                        markdown += '<details><summary>💻 代码 (' + lang + ')</summary>\n\n```' + lang + '\n' + content.content + '\n```\n\n</details>\n\n';
+                        markdown += '<details><summary>💻 Code (' + lang + ')</summary>\n\n```' + lang + '\n' + content.content + '\n```\n\n</details>\n\n';
                     }
                     break;
                 case 'tool_call':
-                    // 简化工具调用的显示，不再显示详细参数
+                    // Simplify tool call display, no longer showing detailed parameters
                     const toolName = content.metadata?.toolName || 'unknown';
                     const toolEmoji = getToolEmoji(toolName);
                     markdown += `${toolEmoji} **${getToolDescription(toolName)}**\n\n`;
                     break;
                 case 'tool_result':
                     if (content.content.trim()) {
-                        markdown += '<details><summary>📋 执行结果</summary>\n\n```\n' + content.content + '\n```\n\n</details>\n\n';
+                        markdown += '<details><summary>📋 Execution Result</summary>\n\n```\n' + content.content + '\n```\n\n</details>\n\n';
                     }
                     break;
             }
         });
-        // 只有在有实际内容时才添加中间输出块和分隔线
+        // Only add intermediate output block and separator when there's actual content
         if (hasContent) {
-            // 添加中间输出块
+            // Add intermediate output block
             if (message.intermediateChunks && message.intermediateChunks.length > 0) {
-                markdown += '**中间输出:**\n\n';
+                markdown += '**Intermediate Output:**\n\n';
                 message.intermediateChunks.forEach((chunk, i) => {
-                    if (chunk.trim()) { // 只添加非空的中间输出
-                        markdown += `<details><summary>中间输出 #${i + 1}</summary>\n\n`;
+                    if (chunk.trim()) { // Only add non-empty intermediate outputs
+                        markdown += `<details><summary>Intermediate Output #${i + 1}</summary>\n\n`;
                         markdown += '```\n' + chunk + '\n```\n\n';
                         markdown += '</details>\n\n';
                     }
                 });
             }
-            // 添加分隔线
+            // Add separator
             if (index < messages.length - 1) {
                 markdown += '---\n\n';
             }
@@ -105,7 +106,7 @@ function convertToMarkdown(conversation) {
     });
     return markdown;
 }
-// 添加工具emoji映射函数
+// Add tool emoji mapping function
 function getToolEmoji(toolName) {
     const emojiMap = {
         'read_file': '📖',
@@ -119,18 +120,18 @@ function getToolEmoji(toolName) {
     };
     return emojiMap[toolName] || '🛠️';
 }
-// 添加工具描述映射函数
 function getToolDescription(toolName) {
-    const descMap = {
-        'read_file': '读取文件',
-        'edit_file': '编辑文件',
-        'list_dir': '列出目录',
-        'codebase_search': '搜索代码',
-        'grep_search': '文本搜索',
-        'file_search': '查找文件',
-        'run_terminal_command': '执行命令',
-        'delete_file': '删除文件'
+    const toolMap = {
+        'read_file': 'toolReadFile',
+        'edit_file': 'toolEditFile',
+        'list_dir': 'toolListDir',
+        'codebase_search': 'toolCodebaseSearch',
+        'grep_search': 'toolGrepSearch',
+        'file_search': 'toolFileSearch',
+        'run_terminal_command': 'toolRunCommand',
+        'delete_file': 'toolDeleteFile'
     };
-    return descMap[toolName] || '工具调用';
+    const translationKey = toolMap[toolName] || 'toolGeneric';
+    return (0, i18n_1.t)(translationKey);
 }
 //# sourceMappingURL=markdown.js.map

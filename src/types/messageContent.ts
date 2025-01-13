@@ -2,15 +2,16 @@
 export type MessageContentType = 'thinking' | 'tool_call' | 'tool_result' | 'code' | 'text' | 'markdown';
 
 // 工具状态
-export type ToolStatus = 'pending' | 'success' | 'error';
+export type ToolStatus = 'pending' | 'running' | 'success' | 'error' | 'completed';
 
 // 格式类型
-export type FormatType = 'heading' | 'paragraph' | 'list' | 'code' | 'code_inline' | 'quote' | 'link';
+export type FormatType = 'text' | 'code' | 'link' | 'emphasis' | 'strong' | 'heading' | 'list' | 'quote' | 'table' | 'header' | 'list_item' | 'blockquote' | 'code_inline';
 
 // 格式元素
 export interface FormatElement {
     type: FormatType;
     level?: number;
+    indent?: number;
     url?: string;
     title?: string;
 }

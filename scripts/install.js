@@ -122,7 +122,8 @@ function copyExtensionFiles(sourceDir, targetDir) {
     const necessaryFiles = [
         'package.json',
         'node_modules',
-        'out'
+        'out',
+        'scripts'
     ];
 
     let copiedFiles = 0;

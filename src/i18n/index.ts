@@ -48,7 +48,15 @@ export function getLocale(): string {
     return 'en';
 }
 
-export function t(key: keyof Translations): string {
+function formatString(str: string, ...args: any[]): string {
+    return str.replace(/{(\d+)}/g, (match, index) => {
+        return args[index] !== undefined ? args[index] : match;
+    });
+}
+
+// Update the t function to accept additional arguments
+export function t(key: keyof Translations, ...args: any[]): string {
     const locale = getLocale();
-    return locales[locale][key];
+    const template = locales[locale][key];
+    return formatString(template, ...args);
 } 

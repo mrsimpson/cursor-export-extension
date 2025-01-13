@@ -11,6 +11,9 @@ dist/
 test-output/
 coverage/
 
+# local output while manual testing
+cursor-chat-export*
+
 # IDE and editor files
 .vscode/*
 !.vscode/settings.json
