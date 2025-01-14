@@ -8,6 +8,7 @@ import prettier from 'prettier';
 import { format as sqlFormat } from 'sql-formatter';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { t } from './i18n';
 
 const execAsync = promisify(exec);
 
@@ -26,7 +27,7 @@ export async function showStatus<T>(
 ): Promise<T> {
     return vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: '导出对话',
+        title: t('exportDialogTitle'),
         cancellable: false
     }, callback);
 }
@@ -65,7 +66,7 @@ export async function getDefaultOutputPath(): Promise<string> {
         }
     }
     
-    log(`默认导出路径: ${outputPath}`, 'info');
+    log(`${t('defaultExportPath')}: ${outputPath}`, 'info');
     return outputPath;
 }
 
@@ -122,63 +123,74 @@ export function formatTimestamp(timestamp: number): string {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     
+    // Get user's locale from VS Code or system
+    const locale = process.env.VSCODE_NLS_CONFIG
+        ? JSON.parse(process.env.VSCODE_NLS_CONFIG).locale
+        : Intl.DateTimeFormat().resolvedOptions().locale;
+
     // 1分钟内
     if (diff < 60000) {
-        return '刚刚';
+        return t('justNow');
     }
     
     // 1小时内
     if (diff < 3600000) {
         const minutes = Math.floor(diff / 60000);
-        return `${minutes}分钟前`;
+        return t('minutesAgo', minutes);
     }
     
     // 24小时内
     if (diff < 86400000) {
         const hours = Math.floor(diff / 3600000);
-        return `${hours}小时前`;
+        return t('hoursAgo', hours);
     }
     
     // 30天内
     if (diff < 2592000000) {
         const days = Math.floor(diff / 86400000);
-        return `${days}天前`;
+        return t('daysAgo', days);
     }
     
     // 超过30天，显示完整日期时间
-    return date.toLocaleString();
+    return date.toLocaleString(locale, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 }
 
 // 格式化文件大小
 export function formatFileSize(bytes: number): string {
     if (bytes < 1024) {
-        return `${bytes} B`;
+        return t('bytes', bytes);
     }
     if (bytes < 1024 * 1024) {
-        return `${(bytes / 1024).toFixed(1)} KB`;
+        return t('kilobytes', (bytes / 1024).toFixed(1));
     }
     if (bytes < 1024 * 1024 * 1024) {
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        return t('megabytes', (bytes / (1024 * 1024)).toFixed(1));
     }
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+    return t('gigabytes', (bytes / (1024 * 1024 * 1024)).toFixed(1));
 }
 
 // 格式化持续时间
 export function formatDuration(ms: number): string {
     if (ms < 1000) {
-        return `${ms}毫秒`;
+        return t('milliseconds', ms);
     }
     if (ms < 60000) {
-        return `${(ms / 1000).toFixed(1)}秒`;
+        return t('seconds', (ms / 1000).toFixed(1));
     }
     if (ms < 3600000) {
         const minutes = Math.floor(ms / 60000);
         const seconds = Math.floor((ms % 60000) / 1000);
-        return `${minutes}分${seconds}秒`;
+        return t('minutesSeconds', minutes, seconds);
     }
     const hours = Math.floor(ms / 3600000);
     const minutes = Math.floor((ms % 3600000) / 60000);
-    return `${hours}小时${minutes}分`;
+    return t('hoursMinutes', hours, minutes);
 }
 
 // 检查文件是否存在
