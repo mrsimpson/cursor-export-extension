@@ -59,7 +59,7 @@
         "test": "node ./out/test/runTest.js",
         "package": "vsce package --no-dependencies",
         "install-extension": "node ./scripts/install.js",
-        "export": "ts-node"
+        "reinstall": "rm -rf ./out && npm run compile && npm run install-extension -- --quick"
     },
     "dependencies": {
         "prettier": "^3.1.1",

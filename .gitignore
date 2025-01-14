@@ -1,0 +1,10 @@
+# build
+node_modules
+out
+*.vsix
+
+# IDE
+.DS_Store
+
+# local testing artifacts
+cursor-chat-export*
